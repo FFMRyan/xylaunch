@@ -9,7 +9,7 @@ if [[ -f "$PACKAGE_CONFIG" ]]; then
   source "$PACKAGE_CONFIG"
 fi
 
-APP_NAME="${APP_NAME:-XYLaunch}"
+APP_NAME="${APP_NAME:-小火箭启动器}"
 VERSION="${VERSION:-1.0.0}"
 DIST_DIR="$ROOT_DIR/dist"
 APP_DIR="$DIST_DIR/${APP_NAME}.app"
@@ -22,9 +22,9 @@ if [[ "${1:-}" == "--help" ]]; then
   ./scripts/create_dmg.sh
 
 可选环境变量:
-  APP_NAME=XYLaunch
+  APP_NAME=小火箭启动器
   VERSION=1.0.0
-  VOLUME_NAME="XYLaunch Installer"
+  VOLUME_NAME="小火箭启动器 Installer"
   PACKAGE_CONFIG=./scripts/package.env
 
 说明:

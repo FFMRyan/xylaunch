@@ -51,15 +51,17 @@ struct LaunchItem: Identifiable, Codable, Hashable, Sendable {
     }
 }
 
-struct ApplicationEntry: Identifiable, Hashable, Sendable {
+struct ApplicationEntry: Identifiable, Hashable, Codable, Sendable {
     let id: String
     let name: String
     let path: String
+    let bundleIdentifier: String?
 
-    init(name: String, path: String) {
+    init(name: String, path: String, bundleIdentifier: String? = nil) {
         self.id = path
         self.name = name
         self.path = path
+        self.bundleIdentifier = bundleIdentifier
     }
 
     var url: URL {

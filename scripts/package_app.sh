@@ -11,15 +11,21 @@ if [[ -f "$PACKAGE_CONFIG" ]]; then
   source "$PACKAGE_CONFIG"
 fi
 
-APP_NAME="${APP_NAME:-XYLaunch}"
+APP_NAME="${APP_NAME:-小火箭启动器}"
 EXECUTABLE_NAME="${EXECUTABLE_NAME:-XYLaunch}"
 BUNDLE_ID="${BUNDLE_ID:-com.xylaunch.app}"
 VERSION="${VERSION:-1.0.0}"
 BUILD_NUMBER="${BUILD_NUMBER:-1}"
-ICON_SOURCE="${ICON_SOURCE:-}"
+ICON_SOURCE="${ICON_SOURCE:-$ROOT_DIR/Xcode/Resources/appicon.png}"
 CODESIGN_IDENTITY="${CODESIGN_IDENTITY:--}"
 SKIP_CODESIGN="${SKIP_CODESIGN:-0}"
 MIN_SYSTEM_VERSION="${MIN_SYSTEM_VERSION:-13.0}"
+LS_UI_ELEMENT="${LS_UI_ELEMENT:-0}"
+USE_XCODEBUILD="${USE_XCODEBUILD:-1}"
+XCODE_SCHEME="${XCODE_SCHEME:-XYLaunch}"
+XCODE_PROJECT="${XCODE_PROJECT:-$ROOT_DIR/XYLaunch.xcodeproj}"
+XCODE_CONFIGURATION="${XCODE_CONFIGURATION:-Release}"
+XCODE_PRODUCT_NAME="${XCODE_PRODUCT_NAME:-XYLaunch}"
 
 APP_DIR="$DIST_DIR/${APP_NAME}.app"
 ICONSET_DIR="$TMP_DIR/AppIcon.iconset"
@@ -35,7 +41,7 @@ if [[ "${1:-}" == "--help" ]]; then
   ./scripts/package_app.sh
 
 可选环境变量:
-  APP_NAME=XYLaunch
+  APP_NAME=小火箭启动器
   EXECUTABLE_NAME=XYLaunch
   BUNDLE_ID=com.xylaunch.app
   VERSION=1.0.0
@@ -44,6 +50,12 @@ if [[ "${1:-}" == "--help" ]]; then
   CODESIGN_IDENTITY=-                    # 默认 ad-hoc
   SKIP_CODESIGN=1                        # 跳过签名
   MIN_SYSTEM_VERSION=13.0
+  LS_UI_ELEMENT=0                         # 1=状态栏模式，0=常规应用
+  USE_XCODEBUILD=1                        # 优先使用 xcodebuild 产物
+  XCODE_SCHEME=XYLaunch
+  XCODE_PROJECT=./XYLaunch.xcodeproj
+  XCODE_CONFIGURATION=Release
+  XCODE_PRODUCT_NAME=XYLaunch
   PACKAGE_CONFIG=./scripts/package.env
 HELP
   exit 0
@@ -182,11 +194,22 @@ resolve_icon_icns() {
 }
 
 pushd "$ROOT_DIR" >/dev/null
-BIN_DIR="$(swift build -c release --show-bin-path)"
-swift build -c release
+if [[ "$USE_XCODEBUILD" == "1" && -d "$XCODE_PROJECT" ]]; then
+  XCODE_DERIVED_DATA="$ROOT_DIR/.xcodebuild-package"
+  xcodebuild \
+    -project "$XCODE_PROJECT" \
+    -scheme "$XCODE_SCHEME" \
+    -configuration "$XCODE_CONFIGURATION" \
+    -derivedDataPath "$XCODE_DERIVED_DATA" \
+    build >/dev/null
+  EXECUTABLE_PATH="$XCODE_DERIVED_DATA/Build/Products/$XCODE_CONFIGURATION/$XCODE_PRODUCT_NAME.app/Contents/MacOS/$EXECUTABLE_NAME"
+else
+  BIN_DIR="$(swift build -c release --show-bin-path)"
+  swift build -c release
+  EXECUTABLE_PATH="$BIN_DIR/$EXECUTABLE_NAME"
+fi
 popd >/dev/null
 
-EXECUTABLE_PATH="$BIN_DIR/$EXECUTABLE_NAME"
 if [[ ! -x "$EXECUTABLE_PATH" ]]; then
   echo "无法找到可执行文件: $EXECUTABLE_PATH" >&2
   exit 1
@@ -197,8 +220,8 @@ resolve_icon_icns
 rm -rf "$APP_DIR"
 mkdir -p "$APP_DIR/Contents/MacOS" "$APP_DIR/Contents/Resources" "$ICONSET_DIR"
 
-cp "$EXECUTABLE_PATH" "$APP_DIR/Contents/MacOS/$APP_NAME"
-chmod +x "$APP_DIR/Contents/MacOS/$APP_NAME"
+cp "$EXECUTABLE_PATH" "$APP_DIR/Contents/MacOS/$EXECUTABLE_NAME"
+chmod +x "$APP_DIR/Contents/MacOS/$EXECUTABLE_NAME"
 cp "$ICNS_FILE" "$APP_DIR/Contents/Resources/AppIcon.icns"
 
 cat > "$APP_DIR/Contents/Info.plist" <<PLIST
@@ -209,7 +232,7 @@ cat > "$APP_DIR/Contents/Info.plist" <<PLIST
   <key>CFBundleDisplayName</key>
   <string>${APP_NAME}</string>
   <key>CFBundleExecutable</key>
-  <string>${APP_NAME}</string>
+  <string>${EXECUTABLE_NAME}</string>
   <key>CFBundleIconFile</key>
   <string>AppIcon</string>
   <key>CFBundleIdentifier</key>
@@ -217,7 +240,7 @@ cat > "$APP_DIR/Contents/Info.plist" <<PLIST
   <key>CFBundleInfoDictionaryVersion</key>
   <string>6.0</string>
   <key>CFBundleName</key>
-  <string>${APP_NAME}</string>
+  <string>${EXECUTABLE_NAME}</string>
   <key>CFBundlePackageType</key>
   <string>APPL</string>
   <key>CFBundleShortVersionString</key>
@@ -227,7 +250,7 @@ cat > "$APP_DIR/Contents/Info.plist" <<PLIST
   <key>LSMinimumSystemVersion</key>
   <string>${MIN_SYSTEM_VERSION}</string>
   <key>LSUIElement</key>
-  <true/>
+  <$([[ "$LS_UI_ELEMENT" == "1" ]] && echo "true" || echo "false")/>
   <key>NSHighResolutionCapable</key>
   <true/>
   <key>NSPrincipalClass</key>
@@ -237,7 +260,7 @@ cat > "$APP_DIR/Contents/Info.plist" <<PLIST
 PLIST
 
 if [[ "$SKIP_CODESIGN" != "1" ]]; then
-  codesign --force --deep --sign "$CODESIGN_IDENTITY" "$APP_DIR" >/dev/null 2>&1 || true
+  codesign --force --deep --sign "$CODESIGN_IDENTITY" "$APP_DIR" >/dev/null
 fi
 
 echo "已生成应用：$APP_DIR"

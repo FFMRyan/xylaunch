@@ -29,7 +29,11 @@ enum AppScanner {
                 }
 
                 discoveredApps.append(
-                    ApplicationEntry(name: displayName(for: appURL), path: appPath)
+                    ApplicationEntry(
+                        name: displayName(for: appURL),
+                        path: appPath,
+                        bundleIdentifier: Bundle(url: appURL)?.bundleIdentifier
+                    )
                 )
             }
         }
@@ -40,7 +44,20 @@ enum AppScanner {
     }
 
     private static func displayName(for appURL: URL) -> String {
+        let localizedFileName = FileManager.default.displayName(atPath: appURL.path)
+        if !localizedFileName.isEmpty, localizedFileName != appURL.lastPathComponent {
+            return localizedFileName
+        }
+
         if let bundle = Bundle(url: appURL) {
+            if let localizedDisplayName = bundle.localizedInfoDictionary?["CFBundleDisplayName"] as? String,
+               !localizedDisplayName.isEmpty {
+                return localizedDisplayName
+            }
+            if let localizedName = bundle.localizedInfoDictionary?["CFBundleName"] as? String,
+               !localizedName.isEmpty {
+                return localizedName
+            }
             if let displayName = bundle.object(forInfoDictionaryKey: "CFBundleDisplayName") as? String,
                !displayName.isEmpty {
                 return displayName

@@ -9,6 +9,26 @@ cd /Users/ys/Desktop/XYLaunch
 swift run
 ```
 
+## Xcode 运行
+
+已包含可直接打开的工程：
+
+- `/Users/ys/Desktop/XYLaunch/XYLaunch.xcodeproj`
+
+步骤：
+
+1. 双击 `XYLaunch.xcodeproj`（或 `open XYLaunch.xcodeproj`）
+2. 选择 Scheme `XYLaunch`
+3. 点击 Xcode 顶部 `Run`
+
+说明：Xcode 调试运行时默认显示 Dock 图标，便于确认应用已启动。
+
+如果首次使用 Xcode 命令行工具，请先在终端同意许可协议：
+
+```bash
+sudo xcodebuild -license accept
+```
+
 ## 打包 .app
 
 ```bash

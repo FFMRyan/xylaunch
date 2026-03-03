@@ -1,0 +1,330 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		B00100000000000000000001 /* Sources/XYLaunch/App/AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00100000000000000000001 /* Sources/XYLaunch/App/AppDelegate.swift */; };
+		B00100000000000000000002 /* Sources/XYLaunch/App/LauncherPanelController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00100000000000000000002 /* Sources/XYLaunch/App/LauncherPanelController.swift */; };
+		B00100000000000000000003 /* Sources/XYLaunch/Model/LaunchModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00100000000000000000003 /* Sources/XYLaunch/Model/LaunchModels.swift */; };
+		B00100000000000000000004 /* Sources/XYLaunch/Services/AppScanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00100000000000000000004 /* Sources/XYLaunch/Services/AppScanner.swift */; };
+		B00100000000000000000005 /* Sources/XYLaunch/Services/GlobalHotKeyCenter.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00100000000000000000005 /* Sources/XYLaunch/Services/GlobalHotKeyCenter.swift */; };
+		B00100000000000000000006 /* Sources/XYLaunch/Services/IconProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00100000000000000000006 /* Sources/XYLaunch/Services/IconProvider.swift */; };
+		B00100000000000000000007 /* Sources/XYLaunch/Services/ShortcutStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00100000000000000000007 /* Sources/XYLaunch/Services/ShortcutStore.swift */; };
+		B00100000000000000000008 /* Sources/XYLaunch/ViewModel/LauncherViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00100000000000000000008 /* Sources/XYLaunch/ViewModel/LauncherViewModel.swift */; };
+		B00100000000000000000009 /* Sources/XYLaunch/Views/LauncherRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00100000000000000000009 /* Sources/XYLaunch/Views/LauncherRootView.swift */; };
+		B0010000000000000000000A /* Sources/XYLaunch/Views/SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0010000000000000000000A /* Sources/XYLaunch/Views/SettingsView.swift */; };
+		B0010000000000000000000B /* Sources/XYLaunch/XYLaunchApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0010000000000000000000B /* Sources/XYLaunch/XYLaunchApp.swift */; };
+		B0010000000000000000000C /* Sources/XYLaunch/Services/LaunchAtLoginManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0010000000000000000000E /* Sources/XYLaunch/Services/LaunchAtLoginManager.swift */; };
+		B0010000000000000000000D /* Xcode/Resources/AppIcon.icns in Resources */ = {isa = PBXBuildFile; fileRef = F0010000000000000000000F /* Xcode/Resources/AppIcon.icns */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		F00100000000000000000001 /* Sources/XYLaunch/App/AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sources/XYLaunch/App/AppDelegate.swift; sourceTree = SOURCE_ROOT; };
+		F00100000000000000000002 /* Sources/XYLaunch/App/LauncherPanelController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sources/XYLaunch/App/LauncherPanelController.swift; sourceTree = SOURCE_ROOT; };
+		F00100000000000000000003 /* Sources/XYLaunch/Model/LaunchModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sources/XYLaunch/Model/LaunchModels.swift; sourceTree = SOURCE_ROOT; };
+		F00100000000000000000004 /* Sources/XYLaunch/Services/AppScanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sources/XYLaunch/Services/AppScanner.swift; sourceTree = SOURCE_ROOT; };
+		F00100000000000000000005 /* Sources/XYLaunch/Services/GlobalHotKeyCenter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sources/XYLaunch/Services/GlobalHotKeyCenter.swift; sourceTree = SOURCE_ROOT; };
+		F00100000000000000000006 /* Sources/XYLaunch/Services/IconProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sources/XYLaunch/Services/IconProvider.swift; sourceTree = SOURCE_ROOT; };
+		F00100000000000000000007 /* Sources/XYLaunch/Services/ShortcutStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sources/XYLaunch/Services/ShortcutStore.swift; sourceTree = SOURCE_ROOT; };
+		F00100000000000000000008 /* Sources/XYLaunch/ViewModel/LauncherViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sources/XYLaunch/ViewModel/LauncherViewModel.swift; sourceTree = SOURCE_ROOT; };
+		F00100000000000000000009 /* Sources/XYLaunch/Views/LauncherRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sources/XYLaunch/Views/LauncherRootView.swift; sourceTree = SOURCE_ROOT; };
+		F0010000000000000000000A /* Sources/XYLaunch/Views/SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sources/XYLaunch/Views/SettingsView.swift; sourceTree = SOURCE_ROOT; };
+		F0010000000000000000000B /* Sources/XYLaunch/XYLaunchApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sources/XYLaunch/XYLaunchApp.swift; sourceTree = SOURCE_ROOT; };
+		F0010000000000000000000C /* Xcode/Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Xcode/Info.plist; sourceTree = SOURCE_ROOT; };
+		F0010000000000000000000D /* XYLaunch.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = XYLaunch.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		F0010000000000000000000E /* Sources/XYLaunch/Services/LaunchAtLoginManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sources/XYLaunch/Services/LaunchAtLoginManager.swift; sourceTree = SOURCE_ROOT; };
+		F0010000000000000000000F /* Xcode/Resources/AppIcon.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = Xcode/Resources/AppIcon.icns; sourceTree = SOURCE_ROOT; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		BP0100000000000000000002 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		BP0100000000000000000003 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B0010000000000000000000D /* Xcode/Resources/AppIcon.icns in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		G00100000000000000000001 = {
+			isa = PBXGroup;
+			children = (
+				G00100000000000000000002 /* Sources */,
+				G00100000000000000000003 /* Xcode */,
+				G00100000000000000000004 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		G00100000000000000000002 /* Sources */ = {
+			isa = PBXGroup;
+			children = (
+				G00100000000000000000005 /* XYLaunch */,
+			);
+			path = Sources;
+			sourceTree = "<group>";
+		};
+		G00100000000000000000005 /* XYLaunch */ = {
+			isa = PBXGroup;
+			children = (
+				G00100000000000000000006 /* App */,
+				G00100000000000000000007 /* Model */,
+				G00100000000000000000008 /* Services */,
+				G00100000000000000000009 /* ViewModel */,
+				G0010000000000000000000A /* Views */,
+				F0010000000000000000000B /* Sources/XYLaunch/XYLaunchApp.swift */,
+			);
+			path = XYLaunch;
+			sourceTree = "<group>";
+		};
+		G00100000000000000000006 /* App */ = {
+			isa = PBXGroup;
+			children = (
+				F00100000000000000000001 /* Sources/XYLaunch/App/AppDelegate.swift */,
+				F00100000000000000000002 /* Sources/XYLaunch/App/LauncherPanelController.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		G00100000000000000000007 /* Model */ = {
+			isa = PBXGroup;
+			children = (
+				F00100000000000000000003 /* Sources/XYLaunch/Model/LaunchModels.swift */,
+			);
+			path = Model;
+			sourceTree = "<group>";
+		};
+		G00100000000000000000008 /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				F00100000000000000000004 /* Sources/XYLaunch/Services/AppScanner.swift */,
+				F00100000000000000000005 /* Sources/XYLaunch/Services/GlobalHotKeyCenter.swift */,
+				F00100000000000000000006 /* Sources/XYLaunch/Services/IconProvider.swift */,
+				F0010000000000000000000E /* Sources/XYLaunch/Services/LaunchAtLoginManager.swift */,
+				F00100000000000000000007 /* Sources/XYLaunch/Services/ShortcutStore.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		G00100000000000000000009 /* ViewModel */ = {
+			isa = PBXGroup;
+			children = (
+				F00100000000000000000008 /* Sources/XYLaunch/ViewModel/LauncherViewModel.swift */,
+			);
+			path = ViewModel;
+			sourceTree = "<group>";
+		};
+		G0010000000000000000000A /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				F00100000000000000000009 /* Sources/XYLaunch/Views/LauncherRootView.swift */,
+				F0010000000000000000000A /* Sources/XYLaunch/Views/SettingsView.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		G00100000000000000000003 /* Xcode */ = {
+			isa = PBXGroup;
+			children = (
+				F0010000000000000000000C /* Xcode/Info.plist */,
+				F0010000000000000000000F /* Xcode/Resources/AppIcon.icns */,
+			);
+			path = Xcode;
+			sourceTree = "<group>";
+		};
+		G00100000000000000000004 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				F0010000000000000000000D /* XYLaunch.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		T00100000000000000000001 /* XYLaunch */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = C00100000000000000000002 /* Build configuration list for PBXNativeTarget "XYLaunch" */;
+			buildPhases = (
+				BP0100000000000000000001 /* Sources */,
+				BP0100000000000000000002 /* Frameworks */,
+				BP0100000000000000000003 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = XYLaunch;
+			productName = XYLaunch;
+			productReference = F0010000000000000000000D /* XYLaunch.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		P00100000000000000000001 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1620;
+				LastUpgradeCheck = 1620;
+				TargetAttributes = {
+					T00100000000000000000001 = {
+						CreatedOnToolsVersion = 16.2;
+					};
+				};
+			};
+			buildConfigurationList = C00100000000000000000001 /* Build configuration list for PBXProject "XYLaunch" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = G00100000000000000000001;
+			productRefGroup = G00100000000000000000004 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				T00100000000000000000001 /* XYLaunch */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		BP0100000000000000000001 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B00100000000000000000001 /* Sources/XYLaunch/App/AppDelegate.swift in Sources */,
+				B00100000000000000000002 /* Sources/XYLaunch/App/LauncherPanelController.swift in Sources */,
+				B00100000000000000000003 /* Sources/XYLaunch/Model/LaunchModels.swift in Sources */,
+				B00100000000000000000004 /* Sources/XYLaunch/Services/AppScanner.swift in Sources */,
+				B00100000000000000000005 /* Sources/XYLaunch/Services/GlobalHotKeyCenter.swift in Sources */,
+				B00100000000000000000006 /* Sources/XYLaunch/Services/IconProvider.swift in Sources */,
+				B00100000000000000000007 /* Sources/XYLaunch/Services/ShortcutStore.swift in Sources */,
+				B00100000000000000000008 /* Sources/XYLaunch/ViewModel/LauncherViewModel.swift in Sources */,
+				B00100000000000000000009 /* Sources/XYLaunch/Views/LauncherRootView.swift in Sources */,
+				B0010000000000000000000A /* Sources/XYLaunch/Views/SettingsView.swift in Sources */,
+				B0010000000000000000000B /* Sources/XYLaunch/XYLaunchApp.swift in Sources */,
+				B0010000000000000000000C /* Sources/XYLaunch/Services/LaunchAtLoginManager.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		CB0100000000000000000001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		CB0100000000000000000002 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		CB0100000000000000000003 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1000;
+				ENABLE_DEBUG_DYLIB = NO;
+				ENABLE_HARDENED_RUNTIME = NO;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Xcode/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MARKETING_VERSION = 1.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.xylaunch.app;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		CB0100000000000000000004 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1000;
+				ENABLE_HARDENED_RUNTIME = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Xcode/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MARKETING_VERSION = 1.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.xylaunch.app;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		C00100000000000000000001 /* Build configuration list for PBXProject "XYLaunch" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				CB0100000000000000000001 /* Debug */,
+				CB0100000000000000000002 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		C00100000000000000000002 /* Build configuration list for PBXNativeTarget "XYLaunch" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				CB0100000000000000000003 /* Debug */,
+				CB0100000000000000000004 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = P00100000000000000000001 /* Project object */;
+}

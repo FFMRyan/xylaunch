@@ -14,8 +14,18 @@ final class LauncherViewModel: ObservableObject {
 
     private let store = ShortcutStore()
     private let iconProvider = IconProvider.shared
+    private let defaults: UserDefaults
+    private let appOrderKey = "xylaunch.app.order.paths"
+    private let appCacheKey = "xylaunch.app.cache.entries"
+    private let promotedAppleAppPathsKey = "xylaunch.promoted.apple.app.paths"
+    private var appOrderPaths: [String]
+    private var promotedAppleAppPaths: Set<String>
 
     init() {
+        defaults = .standard
+        appOrderPaths = defaults.stringArray(forKey: appOrderKey) ?? []
+        promotedAppleAppPaths = Set(defaults.stringArray(forKey: promotedAppleAppPathsKey) ?? [])
+
         let loadedItems = store.load()
         if loadedItems.isEmpty {
             let defaults = Self.defaultPinnedItems()
@@ -24,29 +34,51 @@ final class LauncherViewModel: ObservableObject {
         } else {
             pinnedItems = loadedItems
         }
+
+        let cached = loadCachedApplications()
+        applications = applyCustomApplicationOrder(cached)
     }
 
     var filteredApplications: [ApplicationEntry] {
-        guard !searchText.isEmpty else {
+        let query = searchTokens
+        guard !query.isEmpty else {
             return applications
         }
         return applications.filter { app in
-            app.name.localizedCaseInsensitiveContains(searchText)
-                || app.path.localizedCaseInsensitiveContains(searchText)
+            matches(queryTokens: query, in: [app.name, app.path])
         }
     }
 
     var filteredPinnedItems: [LaunchItem] {
-        guard !searchText.isEmpty else {
+        let query = searchTokens
+        guard !query.isEmpty else {
             return pinnedItems
         }
         return pinnedItems.filter { item in
-            item.name.localizedCaseInsensitiveContains(searchText)
-                || item.rawValue.localizedCaseInsensitiveContains(searchText)
+            matches(queryTokens: query, in: [item.name, item.rawValue])
+        }
+    }
+
+    private var searchTokens: [String] {
+        searchText
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .lowercased()
+            .split(whereSeparator: \.isWhitespace)
+            .map(String.init)
+    }
+
+    private func matches(queryTokens: [String], in fields: [String]) -> Bool {
+        let normalizedFields = fields.map { $0.lowercased() }
+        return queryTokens.allSatisfy { token in
+            normalizedFields.contains { $0.contains(token) }
         }
     }
 
     func refreshApplications() {
+        guard !isScanning else {
+            return
+        }
+
         isScanning = true
         errorMessage = nil
 
@@ -55,10 +87,40 @@ final class LauncherViewModel: ObservableObject {
                 AppScanner.scanInstalledApplications()
             }.value
 
-            self.applications = scanned
+            let ordered = self.applyCustomApplicationOrder(scanned)
+            self.prunePromotedAppleAppPaths(using: ordered)
+            self.applications = ordered
+            self.appOrderPaths = ordered.map(\.path)
+            self.persistApplicationOrder()
+            self.persistApplicationCache(ordered)
             self.iconProvider.clear()
             self.isScanning = false
         }
+    }
+
+    func isPromotedAppleApplication(path: String) -> Bool {
+        promotedAppleAppPaths.contains(path)
+    }
+
+    func promoteAppleApplicationToTopLevel(path: String) {
+        guard let sourceIndex = applications.firstIndex(where: { $0.path == path }) else {
+            return
+        }
+        guard isAppleApplication(applications[sourceIndex]) else {
+            return
+        }
+
+        if promotedAppleAppPaths.insert(path).inserted {
+            persistPromotedAppleAppPaths()
+        }
+
+        var updated = applications
+        let app = updated.remove(at: sourceIndex)
+        updated.insert(app, at: 0)
+        applications = updated
+        appOrderPaths = updated.map(\.path)
+        persistApplicationOrder()
+        persistApplicationCache(updated)
     }
 
     func icon(for application: ApplicationEntry) -> NSImage {
@@ -158,6 +220,41 @@ final class LauncherViewModel: ObservableObject {
         movePinned(item, by: 1)
     }
 
+    func movePinnedItem(withId movingID: UUID, before targetID: UUID) {
+        guard
+            let sourceIndex = pinnedItems.firstIndex(where: { $0.id == movingID }),
+            let targetIndex = pinnedItems.firstIndex(where: { $0.id == targetID }),
+            sourceIndex != targetIndex
+        else {
+            return
+        }
+
+        // `move(toOffset:)` uses the index after removing the source item.
+        // To place before target, we need to shift destination left when moving downward.
+        let destination = sourceIndex < targetIndex ? targetIndex - 1 : targetIndex
+        pinnedItems.move(fromOffsets: IndexSet(integer: sourceIndex), toOffset: destination)
+        persistPinnedItems()
+    }
+
+    func moveApplication(path movingPath: String, before targetPath: String) {
+        guard
+            let sourceIndex = applications.firstIndex(where: { $0.path == movingPath }),
+            let targetIndex = applications.firstIndex(where: { $0.path == targetPath }),
+            sourceIndex != targetIndex
+        else {
+            return
+        }
+
+        var updated = applications
+        // `move(toOffset:)` uses the index after removing the source item.
+        // To place before target, we need to shift destination left when moving downward.
+        let destination = sourceIndex < targetIndex ? targetIndex - 1 : targetIndex
+        updated.move(fromOffsets: IndexSet(integer: sourceIndex), toOffset: destination)
+        applications = updated
+        appOrderPaths = updated.map(\.path)
+        persistApplicationOrder()
+    }
+
     func requestClosePanel() {
         closePanelAction?()
     }
@@ -226,6 +323,68 @@ final class LauncherViewModel: ObservableObject {
 
     private func persistPinnedItems() {
         store.save(pinnedItems)
+    }
+
+    private func persistApplicationOrder() {
+        defaults.set(appOrderPaths, forKey: appOrderKey)
+    }
+
+    private func persistApplicationCache(_ apps: [ApplicationEntry]) {
+        let encoder = JSONEncoder()
+        guard let data = try? encoder.encode(apps) else {
+            return
+        }
+        defaults.set(data, forKey: appCacheKey)
+    }
+
+    private func persistPromotedAppleAppPaths() {
+        defaults.set(Array(promotedAppleAppPaths), forKey: promotedAppleAppPathsKey)
+    }
+
+    private func loadCachedApplications() -> [ApplicationEntry] {
+        guard let data = defaults.data(forKey: appCacheKey) else {
+            return []
+        }
+        let decoder = JSONDecoder()
+        return (try? decoder.decode([ApplicationEntry].self, from: data)) ?? []
+    }
+
+    private func applyCustomApplicationOrder(_ scanned: [ApplicationEntry]) -> [ApplicationEntry] {
+        guard !appOrderPaths.isEmpty else {
+            return scanned
+        }
+
+        let rankMap = Dictionary(uniqueKeysWithValues: appOrderPaths.enumerated().map { ($1, $0) })
+        return scanned.sorted { lhs, rhs in
+            let lhsRank = rankMap[lhs.path] ?? Int.max
+            let rhsRank = rankMap[rhs.path] ?? Int.max
+            if lhsRank != rhsRank {
+                return lhsRank < rhsRank
+            }
+            return lhs.name.localizedCaseInsensitiveCompare(rhs.name) == .orderedAscending
+        }
+    }
+
+    private func prunePromotedAppleAppPaths(using apps: [ApplicationEntry]) {
+        let appByPath = Dictionary(uniqueKeysWithValues: apps.map { ($0.path, $0) })
+        let validPaths = promotedAppleAppPaths.filter { path in
+            guard let app = appByPath[path] else {
+                return false
+            }
+            return isAppleApplication(app)
+        }
+        if validPaths == promotedAppleAppPaths {
+            return
+        }
+        promotedAppleAppPaths = validPaths
+        persistPromotedAppleAppPaths()
+    }
+
+    private func isAppleApplication(_ app: ApplicationEntry) -> Bool {
+        guard let bundleIdentifier = app.bundleIdentifier?.lowercased() else {
+            return false
+        }
+        return bundleIdentifier.hasPrefix("com.apple.")
     }
 
     private func movePinned(_ item: LaunchItem, by offset: Int) {
