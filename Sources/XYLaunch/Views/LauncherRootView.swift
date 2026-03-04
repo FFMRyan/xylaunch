@@ -12,12 +12,20 @@ struct LauncherRootView: View {
     @State private var currentPage = 0
     @State private var contentSafeInsets = EdgeInsets()
     @State private var isShowingSystemFolder = false
+    @State private var activeCustomFolderID: UUID?
+    @State private var isWiggleMode = false
+    @State private var showSettingsSheet = false
+    @State private var showRenameFolderSheet = false
+    @State private var renamingFolderID: UUID?
+    @State private var renameFolderInput = ""
+    @State private var selectedAppPaths = Set<String>()
+    @State private var keyboardFocusIndex = 0
     @State private var activeDragToken: String?
     @State private var layout = LauncherLayout.default
     @GestureState private var dragOffsetX: CGFloat = 0
 
-    private let maxColumnCount = 7
-    private let maxRowCount = 5
+    private let maxColumnCount = 8
+    private let maxRowCount = 8
     private let pageSwipeThreshold: CGFloat = 120
     private let pageSpacing: CGFloat = 48
     private let topGapToGrid: CGFloat = 52
@@ -51,14 +59,20 @@ struct LauncherRootView: View {
     private var isInAggregateFolderView: Bool {
         isShowingSystemFolder && !hasSearchQuery
     }
+    private var isInCustomFolderView: Bool {
+        activeCustomFolderID != nil && !hasSearchQuery
+    }
+    private var isInFolderOverlay: Bool {
+        isInAggregateFolderView || isInCustomFolderView
+    }
 
     var body: some View {
         ZStack {
             backgroundLayer
                 .contentShape(Rectangle())
                 .onTapGesture {
-                    if isInAggregateFolderView {
-                        closeAggregateFolder()
+                    if isInFolderOverlay {
+                        closeAnyFolderOverlay()
                     } else {
                         viewModel.requestClosePanel()
                     }
@@ -70,6 +84,16 @@ struct LauncherRootView: View {
             .padding(.trailing, contentSafeInsets.trailing)
             if isInAggregateFolderView {
                 aggregateFolderOverlay
+                    .transition(
+                        .asymmetric(
+                            insertion: .scale(scale: 0.92).combined(with: .opacity),
+                            removal: .scale(scale: 0.96).combined(with: .opacity)
+                        )
+                    )
+                    .zIndex(5)
+            }
+            if isInCustomFolderView {
+                customFolderOverlay
                     .transition(
                         .asymmetric(
                             insertion: .scale(scale: 0.92).combined(with: .opacity),
@@ -97,24 +121,40 @@ struct LauncherRootView: View {
             }
         )
         .onExitCommand {
-            if isInAggregateFolderView {
-                closeAggregateFolder()
+            if isInFolderOverlay {
+                closeAnyFolderOverlay()
             } else {
                 viewModel.requestClosePanel()
             }
         }
+        .background(
+            LauncherKeyMonitor { keyCode in
+                handleKeyDown(keyCode)
+            }
+        )
+        .onMoveCommand(perform: handleMoveCommand)
         .sheet(isPresented: $isShowingURLSheet) {
             addURLSheet
         }
+        .sheet(isPresented: $showSettingsSheet) {
+            settingsSheet
+        }
+        .sheet(isPresented: $showRenameFolderSheet) {
+            renameFolderSheet
+        }
         .onChange(of: displayItemIDs) { _ in
             currentPage = 0
+            keyboardFocusIndex = min(keyboardFocusIndex, max(0, displayItems.count - 1))
         }
         .onChange(of: hasSearchQuery) { searching in
             if searching && isShowingSystemFolder {
                 isShowingSystemFolder = false
             }
+            if searching && activeCustomFolderID != nil {
+                activeCustomFolderID = nil
+            }
         }
-        .animation(.spring(response: 0.38, dampingFraction: 0.86), value: isInAggregateFolderView)
+        .animation(.spring(response: 0.38, dampingFraction: 0.86), value: isInFolderOverlay)
     }
 
     private var centeredContent: some View {
@@ -125,9 +165,11 @@ struct LauncherRootView: View {
                 Spacer(minLength: 0)
 
                 VStack(spacing: 0) {
-                    if !isInAggregateFolderView {
+                    if !isInFolderOverlay {
                         searchBar
                             .padding(.top, searchTopGap)
+                        topToolsBar
+                            .padding(.top, 10)
                     }
 
                     if hasSearchQuery {
@@ -157,7 +199,7 @@ struct LauncherRootView: View {
                 .padding(.horizontal, layout.horizontalInset)
                 .contentShape(Rectangle())
                 .onTapGesture {
-                    guard !isInAggregateFolderView, activeDragToken == nil else {
+                    guard !isInFolderOverlay, activeDragToken == nil else {
                         return
                     }
                     viewModel.requestClosePanel()
@@ -170,6 +212,11 @@ struct LauncherRootView: View {
                 }
                 .onChange(of: contentSafeInsets) { _ in
                     updateLayout(for: proxy.size)
+                }
+                .onChange(of: viewModel.preferences) { _ in
+                    withAnimation(.interactiveSpring(response: 0.24, dampingFraction: 0.86)) {
+                        updateLayout(for: proxy.size)
+                    }
                 }
 
                 Spacer(minLength: 0)
@@ -192,7 +239,7 @@ struct LauncherRootView: View {
                 Color.clear
                     .contentShape(Rectangle())
                     .onTapGesture {
-                        guard !isInAggregateFolderView, activeDragToken == nil else {
+                        guard !isInFolderOverlay, activeDragToken == nil else {
                             return
                         }
                         viewModel.requestClosePanel()
@@ -219,11 +266,11 @@ struct LauncherRootView: View {
             .padding(.bottom, gridBottomGap)
             .contentShape(Rectangle())
             .simultaneousGesture(pageSwipeGesture)
-            .opacity(isInAggregateFolderView ? 0 : 1)
-            .allowsHitTesting(!isInAggregateFolderView)
+            .opacity(isInFolderOverlay ? 0 : 1)
+            .allowsHitTesting(!isInFolderOverlay)
             .animation(.interactiveSpring(response: 0.3, dampingFraction: 0.85), value: currentPage)
             .animation(.easeOut(duration: 0.15), value: viewModel.searchText)
-            .animation(.easeOut(duration: 0.2), value: isInAggregateFolderView)
+            .animation(.easeOut(duration: 0.2), value: isInFolderOverlay)
         }
     }
 
@@ -274,6 +321,100 @@ struct LauncherRootView: View {
         }
     }
 
+    private var customFolderOverlay: some View {
+        GeometryReader { proxy in
+            let panelWidth = min(proxy.size.width * 0.94, gridWidth + 160)
+            let panelHeight = min(proxy.size.height * 0.84, currentGridHeight + 280)
+
+            ZStack {
+                Color.black.opacity(0.1)
+                    .ignoresSafeArea()
+                    .onTapGesture {
+                        closeAnyFolderOverlay()
+                    }
+
+                VStack(spacing: 14) {
+                    HStack(spacing: 12) {
+                        Text(currentCustomFolder?.name ?? "文件夹")
+                            .font(.system(size: 25, weight: .regular))
+                            .foregroundStyle(.white.opacity(0.95))
+                        Button("重命名") {
+                            beginRenameCurrentFolder()
+                        }
+                        .buttonStyle(LaunchPadToolButtonStyle())
+                    }
+                    .padding(.top, -6)
+
+                    RoundedRectangle(cornerRadius: 34, style: .continuous)
+                        .fill(Color.white.opacity(0.82))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 34, style: .continuous)
+                                .stroke(Color.white.opacity(0.9), lineWidth: 1)
+                        )
+                        .overlay(
+                            ScrollView(.vertical, showsIndicators: false) {
+                                LazyVGrid(columns: columns, spacing: layout.rowSpacing) {
+                                    ForEach(currentCustomFolderApps, id: \.id) { app in
+                                        customFolderAppTile(app)
+                                    }
+                                }
+                                .padding(.horizontal, 30)
+                                .padding(.top, 26)
+                                .padding(.bottom, 32)
+                            }
+                        )
+                        .shadow(color: .black.opacity(0.12), radius: 24, x: 0, y: 10)
+                        .frame(width: panelWidth, height: panelHeight)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            }
+        }
+    }
+
+    private var topToolsBar: some View {
+        HStack(spacing: 10) {
+            Button(isWiggleMode ? "完成整理" : "整理") {
+                withAnimation(.spring(response: 0.26, dampingFraction: 0.85)) {
+                    isWiggleMode.toggle()
+                    if !isWiggleMode {
+                        selectedAppPaths.removeAll()
+                    }
+                }
+            }
+            .buttonStyle(LaunchPadToolButtonStyle())
+
+            if isWiggleMode {
+                Menu("批量移入文件夹 (\(selectedAppPaths.count))") {
+                    ForEach(viewModel.folders) { folder in
+                        Button(folder.name) {
+                            viewModel.moveApps(Array(selectedAppPaths), toFolder: folder.id)
+                            selectedAppPaths.removeAll()
+                        }
+                        .disabled(selectedAppPaths.isEmpty)
+                    }
+                    Divider()
+                    Button("新建文件夹并移入") {
+                        if let folderID = viewModel.createFolderFromApps(Array(selectedAppPaths), preferredName: "新建文件夹") {
+                            activeCustomFolderID = folderID
+                        }
+                        selectedAppPaths.removeAll()
+                    }
+                    .disabled(selectedAppPaths.count < 2)
+                }
+                .menuStyle(.borderlessButton)
+                .buttonStyle(LaunchPadToolButtonStyle())
+            }
+
+            Button("设置") {
+                showSettingsSheet = true
+            }
+            .buttonStyle(LaunchPadToolButtonStyle())
+
+            Spacer(minLength: 0)
+        }
+        .frame(width: gridWidth)
+    }
+
     private func folderAppTile(_ app: ApplicationEntry) -> some View {
         LaunchPadTile(
             title: app.name,
@@ -282,7 +423,9 @@ struct LauncherRootView: View {
             tileWidth: layout.tileWidth,
             tileHeight: layout.tileHeight,
             iconSize: layout.iconSize,
-            isHovered: hoveredID == app.id
+            isHovered: hoveredID == app.id,
+            isWiggling: false,
+            isSelected: false
         ) {
             viewModel.open(app)
         }
@@ -292,6 +435,44 @@ struct LauncherRootView: View {
         .onDrag {
             NSItemProvider(object: "promote:\(app.path)" as NSString)
         }
+    }
+
+    private func customFolderAppTile(_ app: ApplicationEntry) -> some View {
+        let folderID = activeCustomFolderID
+        return LaunchPadTile(
+            title: app.name,
+            icon: viewModel.icon(for: app),
+            previewIcons: [],
+            tileWidth: layout.tileWidth,
+            tileHeight: layout.tileHeight,
+            iconSize: layout.iconSize,
+            isHovered: hoveredID == app.id,
+            isWiggling: isWiggleMode,
+            isSelected: selectedAppPaths.contains(app.path)
+        ) {
+            if isWiggleMode {
+                if selectedAppPaths.contains(app.path) {
+                    selectedAppPaths.remove(app.path)
+                } else {
+                    selectedAppPaths.insert(app.path)
+                }
+            } else {
+                viewModel.open(app)
+            }
+        }
+        .onHover { hovering in
+            hoveredID = hovering ? app.id : nil
+        }
+        .modifier(
+            FolderAppReorderModifier(
+                folderID: folderID,
+                appPath: app.path,
+                onDropToken: { token, targetFolderID, targetPath in
+                    handleFolderReorder(from: token, toFolderID: targetFolderID, toPath: targetPath)
+                },
+                activeDragToken: $activeDragToken
+            )
+        )
     }
 
     private var currentGridRows: Int {
@@ -323,9 +504,20 @@ struct LauncherRootView: View {
             tileWidth: layout.tileWidth,
             tileHeight: layout.tileHeight,
             iconSize: layout.iconSize,
-            isHovered: hoveredID == item.id
+            isHovered: hoveredID == item.id || displayItems[safe: keyboardFocusIndex]?.id == item.id,
+            isWiggling: isWiggleMode,
+            isSelected: item.appPath.map { selectedAppPaths.contains($0) } ?? false
         ) {
-            item.action()
+            if isWiggleMode, let appPath = item.appPath {
+                if selectedAppPaths.contains(appPath) {
+                    selectedAppPaths.remove(appPath)
+                } else {
+                    selectedAppPaths.insert(appPath)
+                }
+            } else {
+                keyboardFocusIndex = displayItems.firstIndex(where: { $0.id == item.id }) ?? keyboardFocusIndex
+                item.action()
+            }
         }
         .onHover { hovering in
             hoveredID = hovering ? item.id : nil
@@ -336,6 +528,16 @@ struct LauncherRootView: View {
             if let pinned = item.pinnedItem {
                 Button("移除固定") {
                     viewModel.removePinned(pinned)
+                }
+            }
+            if let folderID = item.folderID {
+                Button("删除文件夹") {
+                    viewModel.deleteFolder(id: folderID)
+                }
+            }
+            if let appPath = item.appPath, let folder = viewModel.folderContaining(appPath: appPath) {
+                Button("移出文件夹") {
+                    viewModel.removeApp(appPath, fromFolder: folder.id)
                 }
             }
         }
@@ -357,7 +559,10 @@ struct LauncherRootView: View {
             for: size,
             safeInsets: contentSafeInsets,
             maxColumns: maxColumnCount,
-            maxRows: maxRowCount
+            maxRows: maxRowCount,
+            preferredColumns: viewModel.preferences.columnCount,
+            preferredMaxRows: viewModel.preferences.maxRows,
+            iconScale: viewModel.preferences.iconScale
         )
         guard next != layout else {
             return
@@ -451,6 +656,10 @@ struct LauncherRootView: View {
         viewModel.filteredApplications.filter { !pinnedAppPaths.contains($0.path) }
     }
 
+    private var customFolderedAppPaths: Set<String> {
+        Set(viewModel.folders.flatMap(\.appPaths))
+    }
+
     private var groupedSystemApps: [ApplicationEntry] {
         nonPinnedApps.filter { app in
             isAppleCreatedApplication(app) && !viewModel.isPromotedAppleApplication(path: app.path)
@@ -461,6 +670,25 @@ struct LauncherRootView: View {
         nonPinnedApps.filter { app in
             !isAppleCreatedApplication(app) || viewModel.isPromotedAppleApplication(path: app.path)
         }
+    }
+
+    private var topLevelApps: [ApplicationEntry] {
+        regularApps.filter { !customFolderedAppPaths.contains($0.path) }
+    }
+
+    private var currentCustomFolder: AppFolder? {
+        guard let activeCustomFolderID else {
+            return nil
+        }
+        return viewModel.folders.first(where: { $0.id == activeCustomFolderID })
+    }
+
+    private var currentCustomFolderApps: [ApplicationEntry] {
+        guard let folder = currentCustomFolder else {
+            return []
+        }
+        let appsByPath = Dictionary(uniqueKeysWithValues: viewModel.applications.map { ($0.path, $0) })
+        return folder.appPaths.compactMap { appsByPath[$0] }
     }
 
     private var displayItems: [LaunchDisplayItem] {
@@ -474,6 +702,8 @@ struct LauncherRootView: View {
                     previewIcons: [],
                     pinnedItem: item,
                     reorderTarget: .pinned(item.id),
+                    appPath: nil,
+                    folderID: nil,
                     action: { viewModel.open(item) }
                 )
             )
@@ -481,9 +711,9 @@ struct LauncherRootView: View {
 
         let visibleApps: [ApplicationEntry]
         if hasSearchQuery {
-            visibleApps = nonPinnedApps
-        } else {
             visibleApps = regularApps
+        } else {
+            visibleApps = topLevelApps
         }
 
         for app in visibleApps {
@@ -495,9 +725,39 @@ struct LauncherRootView: View {
                     previewIcons: [],
                     pinnedItem: nil,
                     reorderTarget: .application(app.path),
+                    appPath: app.path,
+                    folderID: nil,
                     action: { viewModel.open(app) }
                 )
             )
+        }
+
+        if !hasSearchQuery {
+            for folder in viewModel.folders {
+                let folderApps = folder.appPaths.compactMap { path in
+                    viewModel.applications.first(where: { $0.path == path })
+                }
+                guard !folderApps.isEmpty else {
+                    continue
+                }
+                items.append(
+                    LaunchDisplayItem(
+                        id: "folder-\(folder.id.uuidString)",
+                        title: folder.name,
+                        icon: folderIcon,
+                        previewIcons: folderApps.prefix(9).map { viewModel.icon(for: $0) },
+                        pinnedItem: nil,
+                        reorderTarget: .folder(folder.id),
+                        appPath: nil,
+                        folderID: folder.id,
+                        action: {
+                            withAnimation(.spring(response: 0.38, dampingFraction: 0.86)) {
+                                activeCustomFolderID = folder.id
+                            }
+                        }
+                    )
+                )
+            }
         }
 
         if !hasSearchQuery, !groupedSystemApps.isEmpty {
@@ -509,6 +769,8 @@ struct LauncherRootView: View {
                     previewIcons: groupedSystemApps.prefix(9).map { viewModel.icon(for: $0) },
                     pinnedItem: nil,
                     reorderTarget: .none,
+                    appPath: nil,
+                    folderID: nil,
                     action: {
                         withAnimation(.spring(response: 0.38, dampingFraction: 0.86)) {
                             isShowingSystemFolder = true
@@ -535,6 +797,13 @@ struct LauncherRootView: View {
     private func closeAggregateFolder() {
         withAnimation(.spring(response: 0.34, dampingFraction: 0.88)) {
             isShowingSystemFolder = false
+        }
+    }
+
+    private func closeAnyFolderOverlay() {
+        withAnimation(.spring(response: 0.34, dampingFraction: 0.88)) {
+            isShowingSystemFolder = false
+            activeCustomFolderID = nil
         }
     }
 
@@ -622,7 +891,7 @@ struct LauncherRootView: View {
     }
 
     private func handlePageSwipe(_ direction: HorizontalPageSwipeDirection) {
-        guard !isInAggregateFolderView else {
+        guard !isInFolderOverlay else {
             return
         }
         let totalPages = pagedItems.count
@@ -647,7 +916,17 @@ struct LauncherRootView: View {
             viewModel.movePinnedItem(withId: sourceID, before: targetID)
             return true
         case let (.application(sourcePath), .application(targetPath)):
+            if isWiggleMode, sourcePath != targetPath {
+                _ = viewModel.createFolderFromApps([sourcePath, targetPath], preferredName: "新建文件夹")
+                return true
+            }
             viewModel.moveApplication(path: sourcePath, before: targetPath)
+            return true
+        case let (.application(sourcePath), .folder(folderID)):
+            viewModel.moveApps([sourcePath], toFolder: folderID)
+            return true
+        case let (.folder(sourceID), .folder(targetID)):
+            viewModel.reorderFolder(id: sourceID, before: targetID)
             return true
         default:
             return false
@@ -663,8 +942,182 @@ struct LauncherRootView: View {
         } else if token.hasPrefix("app:") {
             let value = String(token.dropFirst("app:".count))
             return .application(value)
+        } else if token.hasPrefix("folder:") {
+            let value = String(token.dropFirst("folder:".count))
+            if let id = UUID(uuidString: value) {
+                return .folder(id)
+            }
         }
         return .none
+    }
+
+    private func handleFolderReorder(from dragToken: String, toFolderID: UUID?, toPath: String) -> Bool {
+        guard let toFolderID else {
+            return false
+        }
+        guard
+            let parsed = parseFolderDragToken(dragToken),
+            parsed.folderID == toFolderID
+        else {
+            return false
+        }
+        guard parsed.appPath != toPath else {
+            return false
+        }
+        withAnimation(.interactiveSpring(response: 0.24, dampingFraction: 0.84)) {
+            viewModel.moveAppInFolder(folderID: toFolderID, appPath: parsed.appPath, before: toPath)
+        }
+        return true
+    }
+
+    private func parseFolderDragToken(_ token: String) -> (folderID: UUID, appPath: String)? {
+        let prefix = "folderapp:"
+        guard token.hasPrefix(prefix) else {
+            return nil
+        }
+        let payload = String(token.dropFirst(prefix.count))
+        guard let separatorRange = payload.range(of: "::") else {
+            return nil
+        }
+        let idString = String(payload[..<separatorRange.lowerBound])
+        let appPath = String(payload[separatorRange.upperBound...])
+        guard let id = UUID(uuidString: idString), !appPath.isEmpty else {
+            return nil
+        }
+        return (id, appPath)
+    }
+
+    private func beginRenameCurrentFolder() {
+        guard let folder = currentCustomFolder else {
+            return
+        }
+        renamingFolderID = folder.id
+        renameFolderInput = folder.name
+        showRenameFolderSheet = true
+    }
+
+    private var renameFolderSheet: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("重命名文件夹")
+                .font(.headline)
+            TextField("文件夹名称", text: $renameFolderInput)
+                .textFieldStyle(.roundedBorder)
+            HStack {
+                Spacer()
+                Button("取消") {
+                    showRenameFolderSheet = false
+                    renameFolderInput = ""
+                    renamingFolderID = nil
+                }
+                Button("保存") {
+                    if let renamingFolderID {
+                        viewModel.renameFolder(id: renamingFolderID, name: renameFolderInput)
+                    }
+                    showRenameFolderSheet = false
+                    renameFolderInput = ""
+                    self.renamingFolderID = nil
+                }
+                .keyboardShortcut(.defaultAction)
+            }
+        }
+        .padding(20)
+        .frame(width: 360)
+    }
+
+    private func handleMoveCommand(_ direction: MoveCommandDirection) {
+        guard !displayItems.isEmpty, !isInFolderOverlay else {
+            return
+        }
+
+        let pageCount = pagedItems.count
+        switch direction {
+        case .left:
+            keyboardFocusIndex = max(0, keyboardFocusIndex - 1)
+        case .right:
+            keyboardFocusIndex = min(displayItems.count - 1, keyboardFocusIndex + 1)
+        case .up:
+            keyboardFocusIndex = max(0, keyboardFocusIndex - layout.columnCount)
+        case .down:
+            keyboardFocusIndex = min(displayItems.count - 1, keyboardFocusIndex + layout.columnCount)
+        @unknown default:
+            break
+        }
+
+        let page = keyboardFocusIndex / pageItemCount
+        if pageCount > 0 {
+            currentPage = min(max(0, page), pageCount - 1)
+        }
+    }
+
+    private func handleKeyDown(_ keyCode: UInt16) {
+        guard !isInFolderOverlay else {
+            return
+        }
+
+        // Return
+        if keyCode == 36 || keyCode == 76 {
+            guard displayItems.indices.contains(keyboardFocusIndex) else {
+                return
+            }
+            displayItems[keyboardFocusIndex].action()
+            return
+        }
+
+        // W toggle wiggle mode
+        if keyCode == 13 {
+            withAnimation(.spring(response: 0.28, dampingFraction: 0.85)) {
+                isWiggleMode.toggle()
+                if !isWiggleMode {
+                    selectedAppPaths.removeAll()
+                }
+            }
+        }
+    }
+
+    private var settingsSheet: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("布局设置")
+                .font(.system(size: 20, weight: .semibold))
+
+            HStack {
+                Text("列数")
+                Spacer()
+                Stepper(value: Binding(
+                    get: { viewModel.preferences.columnCount },
+                    set: { viewModel.setGridColumns($0) }
+                ), in: 3 ... 8) {
+                    Text("\(viewModel.preferences.columnCount)")
+                }
+            }
+
+            HStack {
+                Text("最多行数")
+                Spacer()
+                Stepper(value: Binding(
+                    get: { viewModel.preferences.maxRows },
+                    set: { viewModel.setGridRows($0) }
+                ), in: 3 ... 8) {
+                    Text("\(viewModel.preferences.maxRows)")
+                }
+            }
+
+            VStack(alignment: .leading, spacing: 8) {
+                Text("图标缩放")
+                Slider(value: Binding(
+                    get: { viewModel.preferences.iconScale },
+                    set: { viewModel.setIconScale($0) }
+                ), in: 0.7 ... 1.4, step: 0.05)
+            }
+
+            HStack {
+                Spacer()
+                Button("关闭") {
+                    showSettingsSheet = false
+                }
+            }
+        }
+        .padding(20)
+        .frame(width: 380)
     }
 
     private func errorBanner(_ message: String) -> some View {
@@ -830,6 +1283,8 @@ private struct LaunchDisplayItem: Identifiable {
     let previewIcons: [NSImage]
     let pinnedItem: LaunchItem?
     let reorderTarget: ReorderTarget
+    let appPath: String?
+    let folderID: UUID?
     let action: () -> Void
 
     var dragToken: String {
@@ -838,6 +1293,8 @@ private struct LaunchDisplayItem: Identifiable {
             return "pinned:\(id.uuidString)"
         case let .application(path):
             return "app:\(path)"
+        case let .folder(id):
+            return "folder:\(id.uuidString)"
         case .none:
             return "none:\(id)"
         }
@@ -870,6 +1327,36 @@ private struct ReorderModifier: ViewModifier {
     }
 }
 
+private struct FolderAppReorderModifier: ViewModifier {
+    let folderID: UUID?
+    let appPath: String
+    let onDropToken: (String, UUID?, String) -> Bool
+    @Binding var activeDragToken: String?
+
+    func body(content: Content) -> some View {
+        guard let folderID else {
+            return AnyView(content)
+        }
+        let token = "folderapp:\(folderID.uuidString)::\(appPath)"
+        return AnyView(
+            content
+                .onDrag {
+                    activeDragToken = token
+                    return NSItemProvider(object: token as NSString)
+                }
+                .onDrop(
+                    of: [UTType.plainText],
+                    delegate: FolderAppDropDelegate(
+                        targetFolderID: folderID,
+                        targetAppPath: appPath,
+                        onDropToken: onDropToken,
+                        activeDragToken: $activeDragToken
+                    )
+                )
+        )
+    }
+}
+
 private enum HorizontalPageSwipeDirection {
     case left
     case right
@@ -878,6 +1365,7 @@ private enum HorizontalPageSwipeDirection {
 private enum ReorderTarget {
     case pinned(UUID)
     case application(String)
+    case folder(UUID)
     case none
 }
 
@@ -936,6 +1424,52 @@ private struct LaunchItemDropDelegate: DropDelegate {
 
             DispatchQueue.main.async {
                 _ = onDropToken(token, target)
+            }
+        }
+        return true
+    }
+}
+
+private struct FolderAppDropDelegate: DropDelegate {
+    let targetFolderID: UUID?
+    let targetAppPath: String
+    let onDropToken: (String, UUID?, String) -> Bool
+    @Binding var activeDragToken: String?
+
+    func validateDrop(info: DropInfo) -> Bool {
+        info.hasItemsConforming(to: [UTType.plainText])
+    }
+
+    func dropEntered(info: DropInfo) {
+        guard let token = activeDragToken else {
+            return
+        }
+        withAnimation(.interactiveSpring(response: 0.24, dampingFraction: 0.84)) {
+            _ = onDropToken(token, targetFolderID, targetAppPath)
+        }
+    }
+
+    func dropUpdated(info: DropInfo) -> DropProposal? {
+        DropProposal(operation: .move)
+    }
+
+    func performDrop(info: DropInfo) -> Bool {
+        defer { activeDragToken = nil }
+
+        if let token = activeDragToken {
+            _ = onDropToken(token, targetFolderID, targetAppPath)
+            return true
+        }
+
+        guard let provider = info.itemProviders(for: [UTType.plainText]).first else {
+            return false
+        }
+        provider.loadDataRepresentation(forTypeIdentifier: UTType.plainText.identifier) { data, _ in
+            guard let data, let token = String(data: data, encoding: .utf8) else {
+                return
+            }
+            DispatchQueue.main.async {
+                _ = onDropToken(token, targetFolderID, targetAppPath)
             }
         }
         return true
@@ -1032,6 +1566,57 @@ private struct TrackpadSwipeMonitor: NSViewRepresentable {
     }
 }
 
+private struct LauncherKeyMonitor: NSViewRepresentable {
+    let onKeyDown: (UInt16) -> Void
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator(onKeyDown: onKeyDown)
+    }
+
+    func makeNSView(context: Context) -> NSView {
+        context.coordinator.start()
+        return NSView(frame: .zero)
+    }
+
+    func updateNSView(_ nsView: NSView, context: Context) {
+        context.coordinator.onKeyDown = onKeyDown
+    }
+
+    static func dismantleNSView(_ nsView: NSView, coordinator: Coordinator) {
+        coordinator.stop()
+    }
+
+    final class Coordinator {
+        var onKeyDown: (UInt16) -> Void
+        private var monitorToken: Any?
+
+        init(onKeyDown: @escaping (UInt16) -> Void) {
+            self.onKeyDown = onKeyDown
+        }
+
+        func start() {
+            guard monitorToken == nil else {
+                return
+            }
+
+            monitorToken = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
+                guard let self else {
+                    return event
+                }
+                onKeyDown(event.keyCode)
+                return event
+            }
+        }
+
+        func stop() {
+            if let monitorToken {
+                NSEvent.removeMonitor(monitorToken)
+                self.monitorToken = nil
+            }
+        }
+    }
+}
+
 private struct LaunchPadTile: View {
     let title: String
     let icon: NSImage
@@ -1040,6 +1625,8 @@ private struct LaunchPadTile: View {
     let tileHeight: CGFloat
     let iconSize: CGFloat
     let isHovered: Bool
+    let isWiggling: Bool
+    let isSelected: Bool
     let onTap: () -> Void
 
     var body: some View {
@@ -1069,7 +1656,18 @@ private struct LaunchPadTile: View {
             }
             .frame(width: tileWidth, height: tileHeight)
             .scaleEffect(isHovered ? 1.04 : 1.0)
+            .overlay(
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .stroke(Color.white.opacity(isSelected ? 0.95 : 0), lineWidth: 2)
+            )
+            .rotationEffect(.degrees(isWiggling ? -1.6 : 0))
             .animation(.easeOut(duration: 0.18), value: isHovered)
+            .animation(
+                isWiggling
+                    ? .easeInOut(duration: 0.16).repeatForever(autoreverses: true)
+                    : .easeOut(duration: 0.18),
+                value: isWiggling
+            )
         }
         .buttonStyle(.plain)
     }
@@ -1121,9 +1719,10 @@ private struct LauncherLayout: Equatable {
     let rowSpacing: CGFloat
     let horizontalInset: CGFloat
     let searchBarWidth: CGFloat
+    let iconScale: Double
 
     var iconSize: CGFloat {
-        max(76, min(160, tileWidth * 0.73))
+        max(76, min(160, tileWidth * 0.73 * iconScale))
     }
 
     static let `default` = LauncherLayout(
@@ -1134,14 +1733,18 @@ private struct LauncherLayout: Equatable {
         columnSpacing: 44,
         rowSpacing: 36,
         horizontalInset: 150,
-        searchBarWidth: 396
+        searchBarWidth: 396,
+        iconScale: 1.0
     )
 
     static func compute(
         for size: CGSize,
         safeInsets: EdgeInsets,
         maxColumns: Int,
-        maxRows: Int
+        maxRows: Int,
+        preferredColumns: Int,
+        preferredMaxRows: Int,
+        iconScale: Double
     ) -> LauncherLayout {
         let availableWidth = max(420, size.width - safeInsets.leading - safeInsets.trailing - 48)
         let horizontalInset = max(20, min(130, availableWidth * 0.08))
@@ -1154,6 +1757,8 @@ private struct LauncherLayout: Equatable {
 
         var columnCount = Int((gridContainerWidth + minColumnSpacing) / (minTileWidth + minColumnSpacing))
         columnCount = max(2, min(maxColumns, columnCount))
+        let requestedColumns = max(2, min(maxColumns, preferredColumns))
+        columnCount = min(columnCount, requestedColumns)
 
         let spacingDenominator = CGFloat(max(1, columnCount - 1))
         let preferredSpacing = (gridContainerWidth - CGFloat(columnCount) * minTileWidth) / spacingDenominator
@@ -1174,6 +1779,8 @@ private struct LauncherLayout: Equatable {
         let gridBudget = max(tileHeight * 2 + rowSpacing, availableHeight - reservedHeight)
         var rowCount = Int((gridBudget + rowSpacing) / (tileHeight + rowSpacing))
         rowCount = max(2, min(maxRows, rowCount))
+        let requestedRows = max(2, min(maxRows, preferredMaxRows))
+        rowCount = min(rowCount, requestedRows)
 
         let searchBarWidth = max(260, min(520, gridContainerWidth * 0.46))
 
@@ -1185,7 +1792,8 @@ private struct LauncherLayout: Equatable {
             columnSpacing: columnSpacing,
             rowSpacing: rowSpacing,
             horizontalInset: horizontalInset,
-            searchBarWidth: searchBarWidth
+            searchBarWidth: searchBarWidth,
+            iconScale: max(0.7, min(1.4, iconScale))
         )
     }
 }
@@ -1205,5 +1813,11 @@ private struct LaunchPadToolButtonStyle: ButtonStyle {
                 RoundedRectangle(cornerRadius: 8, style: .continuous)
                     .stroke(.white.opacity(0.25), lineWidth: 1)
             )
+    }
+}
+
+private extension Collection {
+    subscript(safe index: Index) -> Element? {
+        indices.contains(index) ? self[index] : nil
     }
 }

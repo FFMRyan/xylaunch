@@ -1,0 +1,71 @@
+{
+  "" : {
+    "const-values" : "/Users/ys/Desktop/XYLaunch/.xcodebuild-package/Build/Intermediates.noindex/XYLaunch.build/Release/XYLaunch.build/Objects-normal/x86_64/XYLaunch-primary.swiftconstvalues",
+    "dependencies" : "/Users/ys/Desktop/XYLaunch/.xcodebuild-package/Build/Intermediates.noindex/XYLaunch.build/Release/XYLaunch.build/Objects-normal/x86_64/XYLaunch-primary.d",
+    "diagnostics" : "/Users/ys/Desktop/XYLaunch/.xcodebuild-package/Build/Intermediates.noindex/XYLaunch.build/Release/XYLaunch.build/Objects-normal/x86_64/XYLaunch-primary.dia",
+    "emit-module-dependencies" : "/Users/ys/Desktop/XYLaunch/.xcodebuild-package/Build/Intermediates.noindex/XYLaunch.build/Release/XYLaunch.build/Objects-normal/x86_64/XYLaunch-primary-emit-module.d",
+    "emit-module-diagnostics" : "/Users/ys/Desktop/XYLaunch/.xcodebuild-package/Build/Intermediates.noindex/XYLaunch.build/Release/XYLaunch.build/Objects-normal/x86_64/XYLaunch-primary-emit-module.dia",
+    "pch" : "/Users/ys/Desktop/XYLaunch/.xcodebuild-package/Build/Intermediates.noindex/XYLaunch.build/Release/XYLaunch.build/Objects-normal/x86_64/XYLaunch-primary-Bridging-header.pch",
+    "swift-dependencies" : "/Users/ys/Desktop/XYLaunch/.xcodebuild-package/Build/Intermediates.noindex/XYLaunch.build/Release/XYLaunch.build/Objects-normal/x86_64/XYLaunch-primary.swiftdeps"
+  },
+  "/Users/ys/Desktop/XYLaunch/Sources/XYLaunch/App/AppDelegate.swift" : {
+    "index-unit-output-path" : "/XYLaunch.build/Release/XYLaunch.build/Objects-normal/x86_64/AppDelegate.o",
+    "llvm-bc" : "/Users/ys/Desktop/XYLaunch/.xcodebuild-package/Build/Intermediates.noindex/XYLaunch.build/Release/XYLaunch.build/Objects-normal/x86_64/AppDelegate.bc",
+    "object" : "/Users/ys/Desktop/XYLaunch/.xcodebuild-package/Build/Intermediates.noindex/XYLaunch.build/Release/XYLaunch.build/Objects-normal/x86_64/AppDelegate.o"
+  },
+  "/Users/ys/Desktop/XYLaunch/Sources/XYLaunch/App/LauncherPanelController.swift" : {
+    "index-unit-output-path" : "/XYLaunch.build/Release/XYLaunch.build/Objects-normal/x86_64/LauncherPanelController.o",
+    "llvm-bc" : "/Users/ys/Desktop/XYLaunch/.xcodebuild-package/Build/Intermediates.noindex/XYLaunch.build/Release/XYLaunch.build/Objects-normal/x86_64/LauncherPanelController.bc",
+    "object" : "/Users/ys/Desktop/XYLaunch/.xcodebuild-package/Build/Intermediates.noindex/XYLaunch.build/Release/XYLaunch.build/Objects-normal/x86_64/LauncherPanelController.o"
+  },
+  "/Users/ys/Desktop/XYLaunch/Sources/XYLaunch/Model/LaunchModels.swift" : {
+    "index-unit-output-path" : "/XYLaunch.build/Release/XYLaunch.build/Objects-normal/x86_64/LaunchModels.o",
+    "llvm-bc" : "/Users/ys/Desktop/XYLaunch/.xcodebuild-package/Build/Intermediates.noindex/XYLaunch.build/Release/XYLaunch.build/Objects-normal/x86_64/LaunchModels.bc",
+    "object" : "/Users/ys/Desktop/XYLaunch/.xcodebuild-package/Build/Intermediates.noindex/XYLaunch.build/Release/XYLaunch.build/Objects-normal/x86_64/LaunchModels.o"
+  },
+  "/Users/ys/Desktop/XYLaunch/Sources/XYLaunch/Services/AppScanner.swift" : {
+    "index-unit-output-path" : "/XYLaunch.build/Release/XYLaunch.build/Objects-normal/x86_64/AppScanner.o",
+    "llvm-bc" : "/Users/ys/Desktop/XYLaunch/.xcodebuild-package/Build/Intermediates.noindex/XYLaunch.build/Release/XYLaunch.build/Objects-normal/x86_64/AppScanner.bc",
+    "object" : "/Users/ys/Desktop/XYLaunch/.xcodebuild-package/Build/Intermediates.noindex/XYLaunch.build/Release/XYLaunch.build/Objects-normal/x86_64/AppScanner.o"
+  },
+  "/Users/ys/Desktop/XYLaunch/Sources/XYLaunch/Services/GlobalHotKeyCenter.swift" : {
+    "index-unit-output-path" : "/XYLaunch.build/Release/XYLaunch.build/Objects-normal/x86_64/GlobalHotKeyCenter.o",
+    "llvm-bc" : "/Users/ys/Desktop/XYLaunch/.xcodebuild-package/Build/Intermediates.noindex/XYLaunch.build/Release/XYLaunch.build/Objects-normal/x86_64/GlobalHotKeyCenter.bc",
+    "object" : "/Users/ys/Desktop/XYLaunch/.xcodebuild-package/Build/Intermediates.noindex/XYLaunch.build/Release/XYLaunch.build/Objects-normal/x86_64/GlobalHotKeyCenter.o"
+  },
+  "/Users/ys/Desktop/XYLaunch/Sources/XYLaunch/Services/IconProvider.swift" : {
+    "index-unit-output-path" : "/XYLaunch.build/Release/XYLaunch.build/Objects-normal/x86_64/IconProvider.o",
+    "llvm-bc" : "/Users/ys/Desktop/XYLaunch/.xcodebuild-package/Build/Intermediates.noindex/XYLaunch.build/Release/XYLaunch.build/Objects-normal/x86_64/IconProvider.bc",
+    "object" : "/Users/ys/Desktop/XYLaunch/.xcodebuild-package/Build/Intermediates.noindex/XYLaunch.build/Release/XYLaunch.build/Objects-normal/x86_64/IconProvider.o"
+  },
+  "/Users/ys/Desktop/XYLaunch/Sources/XYLaunch/Services/LaunchAtLoginManager.swift" : {
+    "index-unit-output-path" : "/XYLaunch.build/Release/XYLaunch.build/Objects-normal/x86_64/LaunchAtLoginManager.o",
+    "llvm-bc" : "/Users/ys/Desktop/XYLaunch/.xcodebuild-package/Build/Intermediates.noindex/XYLaunch.build/Release/XYLaunch.build/Objects-normal/x86_64/LaunchAtLoginManager.bc",
+    "object" : "/Users/ys/Desktop/XYLaunch/.xcodebuild-package/Build/Intermediates.noindex/XYLaunch.build/Release/XYLaunch.build/Objects-normal/x86_64/LaunchAtLoginManager.o"
+  },
+  "/Users/ys/Desktop/XYLaunch/Sources/XYLaunch/Services/ShortcutStore.swift" : {
+    "index-unit-output-path" : "/XYLaunch.build/Release/XYLaunch.build/Objects-normal/x86_64/ShortcutStore.o",
+    "llvm-bc" : "/Users/ys/Desktop/XYLaunch/.xcodebuild-package/Build/Intermediates.noindex/XYLaunch.build/Release/XYLaunch.build/Objects-normal/x86_64/ShortcutStore.bc",
+    "object" : "/Users/ys/Desktop/XYLaunch/.xcodebuild-package/Build/Intermediates.noindex/XYLaunch.build/Release/XYLaunch.build/Objects-normal/x86_64/ShortcutStore.o"
+  },
+  "/Users/ys/Desktop/XYLaunch/Sources/XYLaunch/ViewModel/LauncherViewModel.swift" : {
+    "index-unit-output-path" : "/XYLaunch.build/Release/XYLaunch.build/Objects-normal/x86_64/LauncherViewModel.o",
+    "llvm-bc" : "/Users/ys/Desktop/XYLaunch/.xcodebuild-package/Build/Intermediates.noindex/XYLaunch.build/Release/XYLaunch.build/Objects-normal/x86_64/LauncherViewModel.bc",
+    "object" : "/Users/ys/Desktop/XYLaunch/.xcodebuild-package/Build/Intermediates.noindex/XYLaunch.build/Release/XYLaunch.build/Objects-normal/x86_64/LauncherViewModel.o"
+  },
+  "/Users/ys/Desktop/XYLaunch/Sources/XYLaunch/Views/LauncherRootView.swift" : {
+    "index-unit-output-path" : "/XYLaunch.build/Release/XYLaunch.build/Objects-normal/x86_64/LauncherRootView.o",
+    "llvm-bc" : "/Users/ys/Desktop/XYLaunch/.xcodebuild-package/Build/Intermediates.noindex/XYLaunch.build/Release/XYLaunch.build/Objects-normal/x86_64/LauncherRootView.bc",
+    "object" : "/Users/ys/Desktop/XYLaunch/.xcodebuild-package/Build/Intermediates.noindex/XYLaunch.build/Release/XYLaunch.build/Objects-normal/x86_64/LauncherRootView.o"
+  },
+  "/Users/ys/Desktop/XYLaunch/Sources/XYLaunch/Views/SettingsView.swift" : {
+    "index-unit-output-path" : "/XYLaunch.build/Release/XYLaunch.build/Objects-normal/x86_64/SettingsView.o",
+    "llvm-bc" : "/Users/ys/Desktop/XYLaunch/.xcodebuild-package/Build/Intermediates.noindex/XYLaunch.build/Release/XYLaunch.build/Objects-normal/x86_64/SettingsView.bc",
+    "object" : "/Users/ys/Desktop/XYLaunch/.xcodebuild-package/Build/Intermediates.noindex/XYLaunch.build/Release/XYLaunch.build/Objects-normal/x86_64/SettingsView.o"
+  },
+  "/Users/ys/Desktop/XYLaunch/Sources/XYLaunch/XYLaunchApp.swift" : {
+    "index-unit-output-path" : "/XYLaunch.build/Release/XYLaunch.build/Objects-normal/x86_64/XYLaunchApp.o",
+    "llvm-bc" : "/Users/ys/Desktop/XYLaunch/.xcodebuild-package/Build/Intermediates.noindex/XYLaunch.build/Release/XYLaunch.build/Objects-normal/x86_64/XYLaunchApp.bc",
+    "object" : "/Users/ys/Desktop/XYLaunch/.xcodebuild-package/Build/Intermediates.noindex/XYLaunch.build/Release/XYLaunch.build/Objects-normal/x86_64/XYLaunchApp.o"
+  }
+}

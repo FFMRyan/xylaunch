@@ -16,7 +16,7 @@ enum AppScanner {
         for root in roots where manager.fileExists(atPath: root.path) {
             guard let enumerator = manager.enumerator(
                 at: root,
-                includingPropertiesForKeys: [.isApplicationKey, .isDirectoryKey],
+                includingPropertiesForKeys: [.isApplicationKey, .isDirectoryKey, .localizedNameKey],
                 options: [.skipsHiddenFiles, .skipsPackageDescendants]
             ) else {
                 continue
@@ -30,7 +30,7 @@ enum AppScanner {
 
                 discoveredApps.append(
                     ApplicationEntry(
-                        name: displayName(for: appURL),
+                        name: AppNameResolver.localizedName(forAppURL: appURL),
                         path: appPath,
                         bundleIdentifier: Bundle(url: appURL)?.bundleIdentifier
                     )
@@ -43,30 +43,4 @@ enum AppScanner {
         }
     }
 
-    private static func displayName(for appURL: URL) -> String {
-        let localizedFileName = FileManager.default.displayName(atPath: appURL.path)
-        if !localizedFileName.isEmpty, localizedFileName != appURL.lastPathComponent {
-            return localizedFileName
-        }
-
-        if let bundle = Bundle(url: appURL) {
-            if let localizedDisplayName = bundle.localizedInfoDictionary?["CFBundleDisplayName"] as? String,
-               !localizedDisplayName.isEmpty {
-                return localizedDisplayName
-            }
-            if let localizedName = bundle.localizedInfoDictionary?["CFBundleName"] as? String,
-               !localizedName.isEmpty {
-                return localizedName
-            }
-            if let displayName = bundle.object(forInfoDictionaryKey: "CFBundleDisplayName") as? String,
-               !displayName.isEmpty {
-                return displayName
-            }
-            if let name = bundle.object(forInfoDictionaryKey: "CFBundleName") as? String,
-               !name.isEmpty {
-                return name
-            }
-        }
-        return appURL.deletingPathExtension().lastPathComponent
-    }
 }

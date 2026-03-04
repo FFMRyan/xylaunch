@@ -1,0 +1,12 @@
+/Users/ys/Desktop/XYLaunch/Sources/XYLaunch/App/AppDelegate.swift
+/Users/ys/Desktop/XYLaunch/Sources/XYLaunch/App/LauncherPanelController.swift
+/Users/ys/Desktop/XYLaunch/Sources/XYLaunch/Model/LaunchModels.swift
+/Users/ys/Desktop/XYLaunch/Sources/XYLaunch/Services/AppScanner.swift
+/Users/ys/Desktop/XYLaunch/Sources/XYLaunch/Services/GlobalHotKeyCenter.swift
+/Users/ys/Desktop/XYLaunch/Sources/XYLaunch/Services/IconProvider.swift
+/Users/ys/Desktop/XYLaunch/Sources/XYLaunch/Services/ShortcutStore.swift
+/Users/ys/Desktop/XYLaunch/Sources/XYLaunch/ViewModel/LauncherViewModel.swift
+/Users/ys/Desktop/XYLaunch/Sources/XYLaunch/Views/LauncherRootView.swift
+/Users/ys/Desktop/XYLaunch/Sources/XYLaunch/Views/SettingsView.swift
+/Users/ys/Desktop/XYLaunch/Sources/XYLaunch/XYLaunchApp.swift
+/Users/ys/Desktop/XYLaunch/Sources/XYLaunch/Services/LaunchAtLoginManager.swift

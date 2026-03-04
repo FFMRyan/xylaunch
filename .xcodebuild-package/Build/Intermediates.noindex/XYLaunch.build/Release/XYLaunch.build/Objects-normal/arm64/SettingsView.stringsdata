@@ -1,0 +1,72 @@
+{
+  "source": "/Users/ys/Desktop/XYLaunch/Sources/XYLaunch/Views/SettingsView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "XYLaunch",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 10
+        }
+      },
+      {
+        "comment": "",
+        "key": "你的状态栏启动台已启动。",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 12
+        }
+      },
+      {
+        "comment": "",
+        "key": "快捷键：Command + Option + Space",
+        "location": {
+          "startingColumn": 19,
+          "startingLine": 17
+        }
+      },
+      {
+        "comment": "",
+        "key": "左键点击状态栏图标可打开启动台",
+        "location": {
+          "startingColumn": 19,
+          "startingLine": 18
+        }
+      },
+      {
+        "comment": "",
+        "key": "右键点击状态栏图标可打开快捷菜单",
+        "location": {
+          "startingColumn": 19,
+          "startingLine": 19
+        }
+      },
+      {
+        "comment": "",
+        "key": "开机自动启动",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 22
+        }
+      },
+      {
+        "comment": "",
+        "key": "固定项目：%lld",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 43
+        }
+      },
+      {
+        "comment": "",
+        "key": "刷新应用列表",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 45
+        }
+      }
+    ]
+  },
+  "version": 1
+}

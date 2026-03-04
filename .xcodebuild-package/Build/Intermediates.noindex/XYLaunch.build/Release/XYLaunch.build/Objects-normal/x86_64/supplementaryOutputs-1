@@ -1,0 +1,12 @@
+{
+  "/Users/ys/Desktop/XYLaunch/Sources/XYLaunch/App/AppDelegate.swift" : {
+    "abi-baseline-json" : "/Users/ys/Desktop/XYLaunch/.xcodebuild-package/Build/Intermediates.noindex/XYLaunch.build/Release/XYLaunch.build/Objects-normal/x86_64/XYLaunch.abi.json",
+    "const-values" : "/Users/ys/Desktop/XYLaunch/.xcodebuild-package/Build/Intermediates.noindex/XYLaunch.build/Release/XYLaunch.build/Objects-normal/x86_64/XYLaunch-primary.swiftconstvalues",
+    "dependencies" : "/Users/ys/Desktop/XYLaunch/.xcodebuild-package/Build/Intermediates.noindex/XYLaunch.build/Release/XYLaunch.build/Objects-normal/x86_64/XYLaunch-primary.d",
+    "diagnostics" : "/Users/ys/Desktop/XYLaunch/.xcodebuild-package/Build/Intermediates.noindex/XYLaunch.build/Release/XYLaunch.build/Objects-normal/x86_64/XYLaunch-primary.dia",
+    "objc-header" : "/Users/ys/Desktop/XYLaunch/.xcodebuild-package/Build/Intermediates.noindex/XYLaunch.build/Release/XYLaunch.build/Objects-normal/x86_64/XYLaunch-Swift.h",
+    "swiftdoc" : "/Users/ys/Desktop/XYLaunch/.xcodebuild-package/Build/Intermediates.noindex/XYLaunch.build/Release/XYLaunch.build/Objects-normal/x86_64/XYLaunch.swiftdoc",
+    "swiftmodule" : "/Users/ys/Desktop/XYLaunch/.xcodebuild-package/Build/Intermediates.noindex/XYLaunch.build/Release/XYLaunch.build/Objects-normal/x86_64/XYLaunch.swiftmodule",
+    "swiftsourceinfo" : "/Users/ys/Desktop/XYLaunch/.xcodebuild-package/Build/Intermediates.noindex/XYLaunch.build/Release/XYLaunch.build/Objects-normal/x86_64/XYLaunch.swiftsourceinfo"
+  }
+}

@@ -1,0 +1,88 @@
+{
+  "source": "/Users/ys/Desktop/XYLaunch/Sources/XYLaunch/Views/LauncherRootView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "移除固定",
+        "location": {
+          "startingColumn": 40,
+          "startingLine": 44
+        }
+      },
+      {
+        "comment": "",
+        "key": "添加文件",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 104
+        }
+      },
+      {
+        "comment": "",
+        "key": "添加网址",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 107
+        }
+      },
+      {
+        "comment": "",
+        "key": "刷新",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 110
+        }
+      },
+      {
+        "comment": "",
+        "key": "搜索",
+        "location": {
+          "startingColumn": 23,
+          "startingLine": 129
+        }
+      },
+      {
+        "comment": "",
+        "key": "关闭",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 224
+        }
+      },
+      {
+        "comment": "",
+        "key": "添加网址",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 240
+        }
+      },
+      {
+        "comment": "",
+        "key": "例如: github.com",
+        "location": {
+          "startingColumn": 23,
+          "startingLine": 242
+        }
+      },
+      {
+        "comment": "",
+        "key": "取消",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 246
+        }
+      },
+      {
+        "comment": "",
+        "key": "添加",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 250
+        }
+      }
+    ]
+  },
+  "version": 1
+}

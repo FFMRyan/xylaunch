@@ -69,6 +69,37 @@ struct ApplicationEntry: Identifiable, Hashable, Codable, Sendable {
     }
 }
 
+struct AppFolder: Identifiable, Hashable, Codable, Sendable {
+    let id: UUID
+    var name: String
+    var appPaths: [String]
+    var createdAt: Date
+
+    init(
+        id: UUID = UUID(),
+        name: String,
+        appPaths: [String],
+        createdAt: Date = .now
+    ) {
+        self.id = id
+        self.name = name
+        self.appPaths = appPaths
+        self.createdAt = createdAt
+    }
+}
+
+struct LauncherPreferences: Hashable, Codable, Sendable {
+    var columnCount: Int
+    var maxRows: Int
+    var iconScale: Double
+
+    static let `default` = LauncherPreferences(
+        columnCount: 5,
+        maxRows: 7,
+        iconScale: 1.0
+    )
+}
+
 enum LauncherTab: String, CaseIterable, Identifiable {
     case all
     case applications

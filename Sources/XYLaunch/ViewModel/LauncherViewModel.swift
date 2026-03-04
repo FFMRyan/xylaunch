@@ -7,6 +7,8 @@ final class LauncherViewModel: ObservableObject {
     @Published var selectedTab: LauncherTab = .all
     @Published private(set) var applications: [ApplicationEntry] = []
     @Published var pinnedItems: [LaunchItem]
+    @Published var folders: [AppFolder]
+    @Published var preferences: LauncherPreferences
     @Published var isScanning = false
     @Published var errorMessage: String?
 
@@ -18,6 +20,8 @@ final class LauncherViewModel: ObservableObject {
     private let appOrderKey = "xylaunch.app.order.paths"
     private let appCacheKey = "xylaunch.app.cache.entries"
     private let promotedAppleAppPathsKey = "xylaunch.promoted.apple.app.paths"
+    private let foldersKey = "xylaunch.folders.v1"
+    private let preferencesKey = "xylaunch.preferences.v1"
     private var appOrderPaths: [String]
     private var promotedAppleAppPaths: Set<String>
 
@@ -35,8 +39,13 @@ final class LauncherViewModel: ObservableObject {
             pinnedItems = loadedItems
         }
 
+        folders = []
+        preferences = .default
+
         let cached = loadCachedApplications()
         applications = applyCustomApplicationOrder(cached)
+        folders = loadFolders()
+        preferences = loadPreferences()
     }
 
     var filteredApplications: [ApplicationEntry] {
@@ -263,6 +272,149 @@ final class LauncherViewModel: ObservableObject {
         errorMessage = nil
     }
 
+    func setGridColumns(_ columns: Int) {
+        preferences.columnCount = max(3, min(8, columns))
+        persistPreferences()
+    }
+
+    func setGridRows(_ rows: Int) {
+        preferences.maxRows = max(3, min(8, rows))
+        persistPreferences()
+    }
+
+    func setIconScale(_ scale: Double) {
+        preferences.iconScale = max(0.7, min(1.4, scale))
+        persistPreferences()
+    }
+
+    func createFolder(name: String, appPaths: [String]) {
+        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        let folderName = trimmed.isEmpty ? "新建文件夹" : trimmed
+        let uniquePaths = Array(Set(appPaths)).sorted()
+        guard !uniquePaths.isEmpty else {
+            return
+        }
+        folders.append(AppFolder(name: folderName, appPaths: uniquePaths))
+        persistFolders()
+    }
+
+    @discardableResult
+    func createFolderFromApps(_ appPaths: [String], preferredName: String = "新建文件夹") -> UUID? {
+        let uniquePaths = Array(Set(appPaths)).filter { path in
+            applications.contains(where: { $0.path == path })
+        }
+        guard uniquePaths.count >= 2 else {
+            return nil
+        }
+
+        for path in uniquePaths {
+            removePathFromAllFolders(path)
+        }
+        let folder = AppFolder(name: preferredName, appPaths: uniquePaths)
+        folders.append(folder)
+        persistFolders()
+        return folder.id
+    }
+
+    func renameFolder(id: UUID, name: String) {
+        guard let index = folders.firstIndex(where: { $0.id == id }) else {
+            return
+        }
+        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else {
+            return
+        }
+        folders[index].name = trimmed
+        persistFolders()
+    }
+
+    func deleteFolder(id: UUID) {
+        folders.removeAll { $0.id == id }
+        persistFolders()
+    }
+
+    func reorderFolder(id movingID: UUID, before targetID: UUID) {
+        guard
+            let sourceIndex = folders.firstIndex(where: { $0.id == movingID }),
+            let targetIndex = folders.firstIndex(where: { $0.id == targetID }),
+            sourceIndex != targetIndex
+        else {
+            return
+        }
+
+        let destination = sourceIndex < targetIndex ? targetIndex - 1 : targetIndex
+        folders.move(fromOffsets: IndexSet(integer: sourceIndex), toOffset: destination)
+        persistFolders()
+    }
+
+    func moveApps(_ appPaths: [String], toFolder folderID: UUID) {
+        guard let folderIndex = folders.firstIndex(where: { $0.id == folderID }) else {
+            return
+        }
+        var existing = Set(folders[folderIndex].appPaths)
+        for path in appPaths where applications.contains(where: { $0.path == path }) {
+            removePathFromAllFolders(path, excluding: folderID)
+            existing.insert(path)
+        }
+        folders[folderIndex].appPaths = Array(existing)
+        persistFolders()
+    }
+
+    func removeApp(_ appPath: String, fromFolder folderID: UUID) {
+        guard let folderIndex = folders.firstIndex(where: { $0.id == folderID }) else {
+            return
+        }
+        folders[folderIndex].appPaths.removeAll { $0 == appPath }
+        persistFolders()
+    }
+
+    func moveAppInFolder(folderID: UUID, appPath movingPath: String, before targetPath: String) {
+        guard let folderIndex = folders.firstIndex(where: { $0.id == folderID }) else {
+            return
+        }
+        guard
+            let sourceIndex = folders[folderIndex].appPaths.firstIndex(of: movingPath),
+            let targetIndex = folders[folderIndex].appPaths.firstIndex(of: targetPath),
+            sourceIndex != targetIndex
+        else {
+            return
+        }
+
+        let destination = sourceIndex < targetIndex ? targetIndex - 1 : targetIndex
+        folders[folderIndex].appPaths.move(
+            fromOffsets: IndexSet(integer: sourceIndex),
+            toOffset: destination
+        )
+        persistFolders()
+    }
+
+    func moveAppToTopLevel(_ appPath: String) {
+        removePathFromAllFolders(appPath)
+        persistFolders()
+    }
+
+    func folderContaining(appPath: String) -> AppFolder? {
+        folders.first(where: { $0.appPaths.contains(appPath) })
+    }
+
+    private func removePathFromAllFolders(_ appPath: String, excluding folderID: UUID? = nil) {
+        var hasChanges = false
+        for index in folders.indices {
+            if let folderID, folders[index].id == folderID {
+                continue
+            }
+            let originalCount = folders[index].appPaths.count
+            folders[index].appPaths.removeAll { $0 == appPath }
+            if folders[index].appPaths.count != originalCount {
+                hasChanges = true
+            }
+        }
+
+        if hasChanges {
+            folders.removeAll { $0.appPaths.isEmpty }
+        }
+    }
+
     private func insertPinned(urls: [URL]) {
         var hasNewItems = false
 
@@ -308,15 +460,8 @@ final class LauncherViewModel: ObservableObject {
     }
 
     private func displayName(for url: URL, kind: LaunchItemKind) -> String {
-        if kind == .app, let bundle = Bundle(url: url) {
-            if let displayName = bundle.object(forInfoDictionaryKey: "CFBundleDisplayName") as? String,
-               !displayName.isEmpty {
-                return displayName
-            }
-            if let name = bundle.object(forInfoDictionaryKey: "CFBundleName") as? String,
-               !name.isEmpty {
-                return name
-            }
+        if kind == .app {
+            return AppNameResolver.localizedName(forAppURL: url)
         }
         return url.deletingPathExtension().lastPathComponent
     }
@@ -339,6 +484,34 @@ final class LauncherViewModel: ObservableObject {
 
     private func persistPromotedAppleAppPaths() {
         defaults.set(Array(promotedAppleAppPaths), forKey: promotedAppleAppPathsKey)
+    }
+
+    private func persistFolders() {
+        guard let data = try? JSONEncoder().encode(folders) else {
+            return
+        }
+        defaults.set(data, forKey: foldersKey)
+    }
+
+    private func loadFolders() -> [AppFolder] {
+        guard let data = defaults.data(forKey: foldersKey) else {
+            return []
+        }
+        return (try? JSONDecoder().decode([AppFolder].self, from: data)) ?? []
+    }
+
+    private func persistPreferences() {
+        guard let data = try? JSONEncoder().encode(preferences) else {
+            return
+        }
+        defaults.set(data, forKey: preferencesKey)
+    }
+
+    private func loadPreferences() -> LauncherPreferences {
+        guard let data = defaults.data(forKey: preferencesKey) else {
+            return .default
+        }
+        return (try? JSONDecoder().decode(LauncherPreferences.self, from: data)) ?? .default
     }
 
     private func loadCachedApplications() -> [ApplicationEntry] {
