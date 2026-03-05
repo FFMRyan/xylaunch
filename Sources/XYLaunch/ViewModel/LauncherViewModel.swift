@@ -297,7 +297,7 @@ final class LauncherViewModel: ObservableObject {
     }
 
     func setIconScale(_ scale: Double) {
-        preferences.iconScale = max(0.7, min(1.4, scale))
+        preferences.iconScale = max(0.7, min(1.54, scale))
         persistPreferences()
     }
 

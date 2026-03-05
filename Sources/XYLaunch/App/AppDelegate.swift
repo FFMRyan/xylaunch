@@ -10,13 +10,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var statusItem: NSStatusItem?
     private var hotKeyCenter: GlobalHotKeyCenter?
     private var singleInstanceLock: SingleInstanceLock?
-    private var launcherWindow: NSWindow?
-    private var previousPresentationOptions: NSApplication.PresentationOptions?
-    private var isTransitioningWindow = false
+    private var panelController: LauncherPanelController?
     private var isTerminatingApp = false
     private var allowTerminateRequest = false
+    private var suppressAutoShowOnNextActivate = false
     private var localKeyMonitor: Any?
-    private var launchRecoveryWorkItem: DispatchWorkItem?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSWindow.allowsAutomaticWindowTabbing = false
@@ -36,6 +34,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         NSApp.setActivationPolicy(.regular)
 
+        panelController = LauncherPanelController(viewModel: viewModel)
         viewModel.closePanelAction = { [weak self] in
             self?.minimizeMainWindow()
         }
@@ -45,12 +44,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         configureQuitShortcut()
         viewModel.refreshApplications()
 
-        // Surface launcher immediately, then run one lightweight recovery check.
+        // Surface launcher immediately.
         DispatchQueue.main.async { [weak self] in
-            self?.bindMainWindowIfNeeded()
             self?.showMainWindow()
         }
-        scheduleLaunchRecovery()
     }
 
     private func ensureSingleInstance() -> Bool {
@@ -129,8 +126,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationWillTerminate(_ notification: Notification) {
-        launchRecoveryWorkItem?.cancel()
-        launchRecoveryWorkItem = nil
         hotKeyCenter?.unregister()
         if let localKeyMonitor {
             NSEvent.removeMonitor(localKeyMonitor)
@@ -242,12 +237,22 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         guard !isTerminatingApp else {
             return false
         }
-        showMainWindow()
+
+        if hasVisibleAppWindows {
+            suppressAutoShowOnNextActivate = true
+            hideAllAppWindows()
+        } else {
+            showMainWindow()
+        }
         return true
     }
 
     func applicationDidBecomeActive(_ notification: Notification) {
         guard !isTerminatingApp else {
+            return
+        }
+        if suppressAutoShowOnNextActivate {
+            suppressAutoShowOnNextActivate = false
             return
         }
         showMainWindow()
@@ -270,207 +275,33 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         guard !isTerminatingApp else {
             return
         }
-        let visible = launcherWindow?.isVisible == true
+        let visible = panelController?.isVisible == true
         visible ? minimizeMainWindow() : showMainWindow()
     }
 
     func showMainWindow() {
-        bindMainWindowIfNeeded()
-        guard let window = launcherWindow else {
-            return
-        }
-        guard !isTransitioningWindow else {
-            return
-        }
-
-        if window.isVisible, window.alphaValue >= 0.98 {
-            NSRunningApplication.current.activate(options: [.activateIgnoringOtherApps])
-            NSApp.activate(ignoringOtherApps: true)
-            window.makeKeyAndOrderFront(nil)
-            return
-        }
-
-        fit(window: window)
-        NSRunningApplication.current.activate(options: [.activateIgnoringOtherApps])
-        NSApp.activate(ignoringOtherApps: true)
-        restoreTrafficLightButtons(for: window)
-        window.alphaValue = 0
-        window.orderFrontRegardless()
-        window.makeKeyAndOrderFront(nil)
-        animateWindowAlpha(window, to: 1.0, duration: 0.1)
+        panelController?.show()
     }
 
     private func hideMainWindow() {
-        launcherWindow?.orderOut(nil)
+        panelController?.hide()
     }
 
     private func minimizeMainWindow() {
-        guard let window = launcherWindow else {
-            return
-        }
-        guard !isTransitioningWindow else {
-            return
-        }
+        panelController?.hide()
+    }
 
-        animateWindowAlpha(window, to: 0, duration: 0.08) {
+    private var hasVisibleAppWindows: Bool {
+        NSApp.windows.contains { window in
+            window.isVisible && !window.isMiniaturized
+        }
+    }
+
+    private func hideAllAppWindows() {
+        panelController?.hide()
+        for window in NSApp.windows where window.isVisible {
             window.orderOut(nil)
-            window.alphaValue = 1
         }
-        exitLauncherPresentationMode()
-    }
-
-    private func scheduleLaunchRecovery() {
-        launchRecoveryWorkItem?.cancel()
-        let workItem = DispatchWorkItem { [weak self] in
-            self?.recoverMainWindowIfNeeded()
-        }
-        launchRecoveryWorkItem = workItem
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.45, execute: workItem)
-    }
-
-    private func fit(window: NSWindow) {
-        let mouseLocation = NSEvent.mouseLocation
-        let screen = NSScreen.screens.first { NSMouseInRect(mouseLocation, $0.frame, false) } ?? window.screen ?? NSScreen.main
-        guard let screen else {
-            return
-        }
-        let visible = screen.visibleFrame
-        let minWidth: CGFloat = 760
-        let minHeight: CGFloat = 520
-        let maxWidth = max(minWidth, visible.width * 0.95)
-        let maxHeight = max(minHeight, visible.height * 0.95)
-
-        var frame = window.frame
-        if frame.width <= 0 || frame.height <= 0 {
-            frame.size = CGSize(width: maxWidth * 0.86, height: maxHeight * 0.86)
-        } else {
-            frame.size.width = min(max(frame.width, minWidth), maxWidth)
-            frame.size.height = min(max(frame.height, minHeight), maxHeight)
-        }
-
-        frame.origin.x = min(max(frame.origin.x, visible.minX), visible.maxX - frame.width)
-        frame.origin.y = min(max(frame.origin.y, visible.minY), visible.maxY - frame.height)
-
-        if !visible.intersects(frame) {
-            frame.origin = CGPoint(
-                x: visible.midX - frame.width / 2,
-                y: visible.midY - frame.height / 2
-            )
-        }
-
-        window.setFrame(frame, display: true, animate: false)
-    }
-
-    func bindMainWindowIfNeeded() {
-        if let bound = launcherWindow, NSApp.windows.contains(bound) {
-            return
-        }
-
-        guard let window = NSApp.windows.first ?? createFallbackWindow() else {
-            return
-        }
-
-        launcherWindow = window
-        configureMainWindowAppearance(window)
-    }
-
-    private func createFallbackWindow() -> NSWindow? {
-        let rootView = LauncherRootView(viewModel: viewModel)
-        let host = NSHostingController(rootView: rootView)
-        let frame = NSScreen.main?.frame ?? NSRect(x: 0, y: 0, width: 1440, height: 900)
-        let window = NSWindow(
-            contentRect: frame,
-            styleMask: [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView],
-            backing: .buffered,
-            defer: false
-        )
-        window.contentViewController = host
-        window.isReleasedWhenClosed = false
-        window.makeKeyAndOrderFront(nil)
-        NSApp.addWindowsItem(window, title: "小火箭启动器", filename: false)
-        return window
-    }
-
-    private func configureMainWindowAppearance(_ window: NSWindow) {
-        window.title = ""
-        window.titleVisibility = .hidden
-        window.titlebarAppearsTransparent = true
-        window.styleMask.insert([.titled, .closable, .miniaturizable, .resizable])
-        window.collectionBehavior = [.canJoinAllSpaces, .fullScreenPrimary, .fullScreenDisallowsTiling]
-        window.level = .mainMenu
-        window.isMovable = true
-        window.backgroundColor = .clear
-        window.isOpaque = false
-        window.hasShadow = false
-        window.isReleasedWhenClosed = false
-        restoreTrafficLightButtons(for: window)
-    }
-
-    private func enterLauncherPresentationMode() {
-        if previousPresentationOptions == nil {
-            previousPresentationOptions = NSApp.presentationOptions
-        }
-        NSApp.presentationOptions = []
-    }
-
-    private func exitLauncherPresentationMode() {
-        if let previousPresentationOptions {
-            NSApp.presentationOptions = previousPresentationOptions
-            self.previousPresentationOptions = nil
-        } else {
-            NSApp.presentationOptions = []
-        }
-    }
-
-    private func restoreTrafficLightButtons(for window: NSWindow) {
-        let buttons: [NSWindow.ButtonType] = [.closeButton, .miniaturizeButton, .zoomButton]
-        for type in buttons {
-            guard let button = window.standardWindowButton(type) else {
-                continue
-            }
-            button.isHidden = false
-            button.isEnabled = true
-            button.alphaValue = 1
-        }
-    }
-
-    private func animateWindowAlpha(
-        _ window: NSWindow,
-        to target: CGFloat,
-        duration: TimeInterval,
-        completion: (@MainActor () -> Void)? = nil
-    ) {
-        isTransitioningWindow = true
-        NSAnimationContext.runAnimationGroup({ context in
-            context.duration = duration
-            context.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
-            window.animator().alphaValue = target
-        }, completionHandler: { [weak self] in
-            Task { @MainActor in
-                guard let self else {
-                    return
-                }
-                self.isTransitioningWindow = false
-                completion?()
-            }
-        })
-    }
-
-    private func recoverMainWindowIfNeeded() {
-        guard !isTerminatingApp else {
-            return
-        }
-        bindMainWindowIfNeeded()
-        guard let window = launcherWindow else {
-            return
-        }
-
-        let notVisible = !window.isVisible || !window.occlusionState.contains(.visible)
-        guard notVisible else {
-            return
-        }
-
-        showMainWindow()
     }
 
     private func configureQuitShortcut() {

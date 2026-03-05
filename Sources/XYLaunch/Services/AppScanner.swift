@@ -1,4 +1,5 @@
 import Foundation
+import CoreServices
 
 enum AppScanner {
     static func scanInstalledApplications() -> [ApplicationEntry] {
@@ -30,7 +31,8 @@ enum AppScanner {
 
                 discoveredApps.append(
                     ApplicationEntry(
-                        name: AppNameResolver.localizedName(forAppURL: appURL),
+                        name: launchServicesDisplayName(for: appURL)
+                            ?? AppNameResolver.localizedName(forAppURL: appURL),
                         path: appPath,
                         bundleIdentifier: Bundle(url: appURL)?.bundleIdentifier
                     )
@@ -41,6 +43,17 @@ enum AppScanner {
         return discoveredApps.sorted {
             $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending
         }
+    }
+
+    private static func launchServicesDisplayName(for appURL: URL) -> String? {
+        var unmanagedName: Unmanaged<CFString>?
+        let status = LSCopyDisplayNameForURL(appURL as CFURL, &unmanagedName)
+        guard status == noErr, let unmanagedName else {
+            return nil
+        }
+        let value = (unmanagedName.takeRetainedValue() as String)
+            .trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
+        return value.isEmpty ? nil : value
     }
 
 }

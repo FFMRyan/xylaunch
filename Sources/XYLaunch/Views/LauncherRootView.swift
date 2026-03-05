@@ -78,7 +78,6 @@ struct LauncherRootView: View {
                     }
                 }
             centeredContent
-            .padding(.top, contentSafeInsets.top)
             .padding(.bottom, contentSafeInsets.bottom)
             .padding(.leading, contentSafeInsets.leading)
             .padding(.trailing, contentSafeInsets.trailing)
@@ -1066,7 +1065,7 @@ struct LauncherRootView: View {
                 Slider(value: Binding(
                     get: { viewModel.preferences.iconScale },
                     set: { viewModel.setIconScale($0) }
-                ), in: 0.7 ... 1.4, step: 0.05)
+                ), in: 0.7 ... 1.54, step: 0.05)
             }
 
             Divider()
@@ -1761,7 +1760,7 @@ private struct LauncherLayout: Equatable {
             rowSpacing: rowSpacing,
             horizontalInset: horizontalInset,
             searchBarWidth: searchBarWidth,
-            iconScale: max(0.7, min(1.4, iconScale))
+            iconScale: max(0.7, min(1.54, iconScale))
         )
     }
 }
