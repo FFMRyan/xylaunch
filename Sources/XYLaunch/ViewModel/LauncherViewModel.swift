@@ -11,6 +11,7 @@ final class LauncherViewModel: ObservableObject {
     @Published var preferences: LauncherPreferences
     @Published var isScanning = false
     @Published var errorMessage: String?
+    @Published private(set) var settingsRequestToken = 0
 
     var closePanelAction: (() -> Void)?
 
@@ -46,6 +47,8 @@ final class LauncherViewModel: ObservableObject {
         applications = applyCustomApplicationOrder(cached)
         folders = loadFolders()
         preferences = loadPreferences()
+        normalizeCachedApplicationNames()
+        normalizePinnedAppNames()
     }
 
     var filteredApplications: [ApplicationEntry] {
@@ -102,9 +105,16 @@ final class LauncherViewModel: ObservableObject {
             self.appOrderPaths = ordered.map(\.path)
             self.persistApplicationOrder()
             self.persistApplicationCache(ordered)
+            self.normalizePinnedAppNames(using: ordered)
             self.iconProvider.clear()
             self.isScanning = false
         }
+    }
+
+    func forceRebuildApplicationCache() {
+        defaults.removeObject(forKey: appCacheKey)
+        iconProvider.clear()
+        refreshApplications()
     }
 
     func isPromotedAppleApplication(path: String) -> Bool {
@@ -266,6 +276,10 @@ final class LauncherViewModel: ObservableObject {
 
     func requestClosePanel() {
         closePanelAction?()
+    }
+
+    func requestOpenSettings() {
+        settingsRequestToken &+= 1
     }
 
     func clearErrorMessage() {
@@ -468,6 +482,56 @@ final class LauncherViewModel: ObservableObject {
 
     private func persistPinnedItems() {
         store.save(pinnedItems)
+    }
+
+    private func normalizeCachedApplicationNames() {
+        var hasChanges = false
+        let normalizedApps = applications.map { app -> ApplicationEntry in
+            let localizedName = AppNameResolver.localizedName(forAppURL: app.url)
+            guard localizedName != app.name else {
+                return app
+            }
+            hasChanges = true
+            return ApplicationEntry(
+                name: localizedName,
+                path: app.path,
+                bundleIdentifier: app.bundleIdentifier
+            )
+        }
+
+        guard hasChanges else {
+            return
+        }
+        applications = normalizedApps
+        persistApplicationCache(normalizedApps)
+    }
+
+    private func normalizePinnedAppNames(using applications: [ApplicationEntry]? = nil) {
+        let appNameByPath: [String: String]
+        if let applications {
+            appNameByPath = Dictionary(uniqueKeysWithValues: applications.map { ($0.path, $0.name) })
+        } else {
+            appNameByPath = [:]
+        }
+
+        var hasChanges = false
+        for index in pinnedItems.indices {
+            guard pinnedItems[index].kind == .app else {
+                continue
+            }
+            let path = pinnedItems[index].rawValue
+            let resolvedName = appNameByPath[path]
+                ?? AppNameResolver.localizedName(forAppURL: URL(fileURLWithPath: path))
+            guard !resolvedName.isEmpty, pinnedItems[index].name != resolvedName else {
+                continue
+            }
+            pinnedItems[index].name = resolvedName
+            hasChanges = true
+        }
+
+        if hasChanges {
+            persistPinnedItems()
+        }
     }
 
     private func persistApplicationOrder() {

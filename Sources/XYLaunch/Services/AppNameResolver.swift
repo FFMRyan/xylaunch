@@ -2,14 +2,17 @@ import Foundation
 
 enum AppNameResolver {
     static func localizedName(forAppURL appURL: URL) -> String {
-        if let localizedFileName = localizedFileName(for: appURL) {
-            return localizedFileName
-        }
-
         if let bundle = Bundle(url: appURL) {
-            if let localizedBundleName = localizedBundleName(from: bundle) {
+            if let localizedBundleName = localizedBundleName(from: bundle, prioritizeChinese: true) {
                 return localizedBundleName
             }
+            if let localizedBundleName = localizedBundleName(from: bundle, prioritizeChinese: false) {
+                return localizedBundleName
+            }
+        }
+
+        if let localizedFileName = localizedFileName(for: appURL) {
+            return localizedFileName
         }
 
         return appURL.deletingPathExtension().lastPathComponent
@@ -29,15 +32,9 @@ enum AppNameResolver {
         return nil
     }
 
-    private static func localizedBundleName(from bundle: Bundle) -> String? {
-        if let localizedDisplayName = normalized(bundle.localizedInfoDictionary?["CFBundleDisplayName"] as? String) {
-            return localizedDisplayName
-        }
-        if let localizedName = normalized(bundle.localizedInfoDictionary?["CFBundleName"] as? String) {
-            return localizedName
-        }
-
-        for localization in localizationCandidates(for: bundle) {
+    private static func localizedBundleName(from bundle: Bundle, prioritizeChinese: Bool) -> String? {
+        let localizations = localizationCandidates(for: bundle, prioritizeChinese: prioritizeChinese)
+        for localization in localizations {
             guard
                 let path = bundle.path(
                     forResource: "InfoPlist",
@@ -58,6 +55,15 @@ enum AppNameResolver {
             }
         }
 
+        if !prioritizeChinese {
+            if let localizedDisplayName = normalized(bundle.localizedInfoDictionary?["CFBundleDisplayName"] as? String) {
+                return localizedDisplayName
+            }
+            if let localizedName = normalized(bundle.localizedInfoDictionary?["CFBundleName"] as? String) {
+                return localizedName
+            }
+        }
+
         if let displayName = normalized(bundle.object(forInfoDictionaryKey: "CFBundleDisplayName") as? String) {
             return displayName
         }
@@ -67,17 +73,21 @@ enum AppNameResolver {
         return nil
     }
 
-    private static func localizationCandidates(for bundle: Bundle) -> [String] {
+    private static func localizationCandidates(for bundle: Bundle, prioritizeChinese: Bool) -> [String] {
         var candidates: [String] = []
 
-        // Always prioritize Chinese localizations first for the launcher's target UX.
-        let preferredChinese = ["zh-Hans", "zh-Hant", "zh_CN", "zh_TW", "zh-HK", "zh"]
-        candidates.append(contentsOf: preferredChinese)
+        let preferredChinese = ["zh-Hans", "zh-Hant", "zh_CN", "zh_TW", "zh-HK", "zh", "Chinese", "zh_CN_#Hans"]
+        if prioritizeChinese {
+            candidates.append(contentsOf: preferredChinese)
+        }
 
         let systemPreferred = Locale.preferredLanguages
         candidates.append(contentsOf: systemPreferred)
         candidates.append(contentsOf: bundle.preferredLocalizations)
         candidates.append(contentsOf: bundle.localizations)
+        if !prioritizeChinese {
+            candidates.append(contentsOf: preferredChinese)
+        }
         candidates.append("Base")
         candidates.append("en")
 

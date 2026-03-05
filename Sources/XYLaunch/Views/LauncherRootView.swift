@@ -30,7 +30,7 @@ struct LauncherRootView: View {
     private let pageSpacing: CGFloat = 48
     private let topGapToGrid: CGFloat = 52
     private let gridBottomGap: CGFloat = 20
-    private let searchTopGap: CGFloat = 28
+    private let searchTopGap: CGFloat = 0
     private let dotsBottomGap: CGFloat = 34
     private let searchBarHeight: CGFloat = 34
     private let baseVerticalPadding: CGFloat = 40
@@ -154,6 +154,9 @@ struct LauncherRootView: View {
                 activeCustomFolderID = nil
             }
         }
+        .onChange(of: viewModel.settingsRequestToken) { _ in
+            showSettingsSheet = true
+        }
         .animation(.spring(response: 0.38, dampingFraction: 0.86), value: isInFolderOverlay)
     }
 
@@ -162,14 +165,10 @@ struct LauncherRootView: View {
             let scale = contentScale(in: proxy.size, contentHeight: contentHeight)
 
             VStack(spacing: 0) {
-                Spacer(minLength: 0)
-
                 VStack(spacing: 0) {
                     if !isInFolderOverlay {
                         searchBar
                             .padding(.top, searchTopGap)
-                        topToolsBar
-                            .padding(.top, 10)
                     }
 
                     if hasSearchQuery {
@@ -190,11 +189,8 @@ struct LauncherRootView: View {
                     }
 
                     launcherGridContent
-
-                    paginationDots
-                        .padding(.top, 8)
                 }
-                .scaleEffect(scale, anchor: .center)
+                .scaleEffect(scale, anchor: .top)
                 .frame(maxWidth: .infinity, alignment: .center)
                 .padding(.horizontal, layout.horizontalInset)
                 .contentShape(Rectangle())
@@ -220,8 +216,12 @@ struct LauncherRootView: View {
                 }
 
                 Spacer(minLength: 0)
-                    .frame(minHeight: dotsBottomGap)
+
+                paginationDots
+                    .frame(maxWidth: .infinity)
+                    .padding(.bottom, max(10, dotsBottomGap - 6))
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         }
     }
 
@@ -369,50 +369,6 @@ struct LauncherRootView: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
         }
-    }
-
-    private var topToolsBar: some View {
-        HStack(spacing: 10) {
-            Button(isWiggleMode ? "完成整理" : "整理") {
-                withAnimation(.spring(response: 0.26, dampingFraction: 0.85)) {
-                    isWiggleMode.toggle()
-                    if !isWiggleMode {
-                        selectedAppPaths.removeAll()
-                    }
-                }
-            }
-            .buttonStyle(LaunchPadToolButtonStyle())
-
-            if isWiggleMode {
-                Menu("批量移入文件夹 (\(selectedAppPaths.count))") {
-                    ForEach(viewModel.folders) { folder in
-                        Button(folder.name) {
-                            viewModel.moveApps(Array(selectedAppPaths), toFolder: folder.id)
-                            selectedAppPaths.removeAll()
-                        }
-                        .disabled(selectedAppPaths.isEmpty)
-                    }
-                    Divider()
-                    Button("新建文件夹并移入") {
-                        if let folderID = viewModel.createFolderFromApps(Array(selectedAppPaths), preferredName: "新建文件夹") {
-                            activeCustomFolderID = folderID
-                        }
-                        selectedAppPaths.removeAll()
-                    }
-                    .disabled(selectedAppPaths.count < 2)
-                }
-                .menuStyle(.borderlessButton)
-                .buttonStyle(LaunchPadToolButtonStyle())
-            }
-
-            Button("设置") {
-                showSettingsSheet = true
-            }
-            .buttonStyle(LaunchPadToolButtonStyle())
-
-            Spacer(minLength: 0)
-        }
-        .frame(width: gridWidth)
     }
 
     private func folderAppTile(_ app: ApplicationEntry) -> some View {
@@ -611,7 +567,11 @@ struct LauncherRootView: View {
         HStack(spacing: 8) {
             Image(systemName: "magnifyingglass")
                 .foregroundStyle(.white.opacity(0.82))
-            TextField("搜索", text: $viewModel.searchText)
+            TextField(
+                "",
+                text: $viewModel.searchText,
+                prompt: Text("搜索").foregroundColor(.white.opacity(0.58))
+            )
                 .textFieldStyle(.plain)
                 .foregroundStyle(.white)
         }
@@ -620,11 +580,11 @@ struct LauncherRootView: View {
         .padding(.vertical, 8)
         .frame(width: layout.searchBarWidth)
         .background(
-            RoundedRectangle(cornerRadius: 8, style: .continuous)
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
                 .fill(.white.opacity(0.07))
         )
         .overlay(
-            RoundedRectangle(cornerRadius: 8, style: .continuous)
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
                 .stroke(.white.opacity(0.22), lineWidth: 1)
         )
         .padding(.horizontal, 18)
@@ -1107,6 +1067,19 @@ struct LauncherRootView: View {
                     get: { viewModel.preferences.iconScale },
                     set: { viewModel.setIconScale($0) }
                 ), in: 0.7 ... 1.4, step: 0.05)
+            }
+
+            Divider()
+
+            HStack(spacing: 10) {
+                Button(viewModel.isScanning ? "重建中..." : "强制重建应用缓存") {
+                    viewModel.forceRebuildApplicationCache()
+                }
+                .disabled(viewModel.isScanning)
+                .buttonStyle(LaunchPadToolButtonStyle())
+                Text("用于刷新旧缓存中的应用名称")
+                    .font(.system(size: 12))
+                    .foregroundStyle(.secondary)
             }
 
             HStack {
@@ -1774,15 +1747,10 @@ private struct LauncherLayout: Equatable {
         let tileHeight = tileWidth * (202.0 / 174.0)
         let rowSpacing = max(16, min(36, columnSpacing * 0.82))
 
-        let availableHeight = max(380, size.height - safeInsets.top - safeInsets.bottom)
-        let reservedHeight: CGFloat = 28 + 34 + 52 + 20 + 34 + 28 + 40
-        let gridBudget = max(tileHeight * 2 + rowSpacing, availableHeight - reservedHeight)
-        var rowCount = Int((gridBudget + rowSpacing) / (tileHeight + rowSpacing))
-        rowCount = max(2, min(maxRows, rowCount))
         let requestedRows = max(2, min(maxRows, preferredMaxRows))
-        rowCount = min(rowCount, requestedRows)
+        let rowCount = requestedRows
 
-        let searchBarWidth = max(260, min(520, gridContainerWidth * 0.46))
+        let searchBarWidth = max(220, min(400, gridContainerWidth * 0.34))
 
         return LauncherLayout(
             columnCount: columnCount,

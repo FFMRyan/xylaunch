@@ -20,6 +20,7 @@
 		B0010000000000000000000B /* Sources/XYLaunch/XYLaunchApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0010000000000000000000B /* Sources/XYLaunch/XYLaunchApp.swift */; };
 		B0010000000000000000000C /* Sources/XYLaunch/Services/LaunchAtLoginManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0010000000000000000000E /* Sources/XYLaunch/Services/LaunchAtLoginManager.swift */; };
 		B0010000000000000000000D /* Xcode/Resources/AppIcon.icns in Resources */ = {isa = PBXBuildFile; fileRef = F0010000000000000000000F /* Xcode/Resources/AppIcon.icns */; };
+		B0010000000000000000000E /* Sources/XYLaunch/Services/AppNameResolver.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00100000000000000000010 /* Sources/XYLaunch/Services/AppNameResolver.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -38,6 +39,7 @@
 		F0010000000000000000000D /* XYLaunch.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = XYLaunch.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		F0010000000000000000000E /* Sources/XYLaunch/Services/LaunchAtLoginManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sources/XYLaunch/Services/LaunchAtLoginManager.swift; sourceTree = SOURCE_ROOT; };
 		F0010000000000000000000F /* Xcode/Resources/AppIcon.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = Xcode/Resources/AppIcon.icns; sourceTree = SOURCE_ROOT; };
+		F00100000000000000000010 /* Sources/XYLaunch/Services/AppNameResolver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sources/XYLaunch/Services/AppNameResolver.swift; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -110,6 +112,7 @@
 			isa = PBXGroup;
 			children = (
 				F00100000000000000000004 /* Sources/XYLaunch/Services/AppScanner.swift */,
+				F00100000000000000000010 /* Sources/XYLaunch/Services/AppNameResolver.swift */,
 				F00100000000000000000005 /* Sources/XYLaunch/Services/GlobalHotKeyCenter.swift */,
 				F00100000000000000000006 /* Sources/XYLaunch/Services/IconProvider.swift */,
 				F0010000000000000000000E /* Sources/XYLaunch/Services/LaunchAtLoginManager.swift */,
@@ -222,6 +225,7 @@
 				B0010000000000000000000A /* Sources/XYLaunch/Views/SettingsView.swift in Sources */,
 				B0010000000000000000000B /* Sources/XYLaunch/XYLaunchApp.swift in Sources */,
 				B0010000000000000000000C /* Sources/XYLaunch/Services/LaunchAtLoginManager.swift in Sources */,
+				B0010000000000000000000E /* Sources/XYLaunch/Services/AppNameResolver.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

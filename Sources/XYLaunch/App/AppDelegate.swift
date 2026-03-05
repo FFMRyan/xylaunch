@@ -139,16 +139,37 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func configureStatusItem() {
-        let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
-        statusItem.button?.image = NSImage(
-            systemSymbolName: "square.grid.2x2.fill",
-            accessibilityDescription: "小火箭启动器"
-        )
+        let statusItem = NSStatusBar.system.statusItem(withLength: 24)
+        let icon = makeStatusBarTemplateIcon()
+        icon.isTemplate = true
+        statusItem.button?.image = icon
         statusItem.button?.imagePosition = .imageOnly
+        statusItem.button?.imageScaling = .scaleProportionallyDown
+        statusItem.button?.title = ""
+        statusItem.button?.attributedTitle = NSAttributedString(string: "")
         statusItem.button?.sendAction(on: [.leftMouseUp, .rightMouseUp])
         statusItem.button?.target = self
         statusItem.button?.action = #selector(onStatusItemClicked)
         self.statusItem = statusItem
+    }
+
+    private func makeStatusBarTemplateIcon() -> NSImage {
+        if let symbolImage = NSImage(
+            systemSymbolName: "rocket.fill",
+            accessibilityDescription: "小火箭启动器"
+        ) {
+            let configured = symbolImage.withSymbolConfiguration(
+                NSImage.SymbolConfiguration(pointSize: 12, weight: .regular)
+            ) ?? symbolImage
+            configured.isTemplate = true
+            configured.size = NSSize(width: 14, height: 14)
+            return configured
+        }
+
+        let fallback = NSImage(named: NSImage.applicationIconName) ?? NSImage()
+        fallback.isTemplate = true
+        fallback.size = NSSize(width: 14, height: 14)
+        return fallback
     }
 
     private func configureHotKey() {
@@ -180,12 +201,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func openStatusMenu() {
         let menu = NSMenu()
         let openItem = NSMenuItem(title: "打开启动台", action: #selector(openLauncher), keyEquivalent: "")
+        let settingsItem = NSMenuItem(title: "设置", action: #selector(openSettings), keyEquivalent: ",")
         let refreshItem = NSMenuItem(title: "刷新应用", action: #selector(refreshApps), keyEquivalent: "r")
         let quitItem = NSMenuItem(title: "退出 小火箭启动器", action: #selector(quitApp), keyEquivalent: "q")
         openItem.target = self
+        settingsItem.target = self
         refreshItem.target = self
         quitItem.target = self
         menu.addItem(openItem)
+        menu.addItem(settingsItem)
         menu.addItem(refreshItem)
         menu.addItem(.separator())
         menu.addItem(quitItem)
@@ -201,6 +225,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     @objc private func refreshApps() {
         viewModel.refreshApplications()
+    }
+
+    @objc private func openSettings() {
+        showMainWindow()
+        viewModel.requestOpenSettings()
     }
 
     @objc private func quitApp() {
@@ -363,9 +392,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func configureMainWindowAppearance(_ window: NSWindow) {
-        window.title = "小火箭启动器"
-        window.titleVisibility = .visible
-        window.titlebarAppearsTransparent = false
+        window.title = ""
+        window.titleVisibility = .hidden
+        window.titlebarAppearsTransparent = true
         window.styleMask.insert([.titled, .closable, .miniaturizable, .resizable])
         window.collectionBehavior = [.canJoinAllSpaces, .fullScreenPrimary, .fullScreenDisallowsTiling]
         window.level = .mainMenu
